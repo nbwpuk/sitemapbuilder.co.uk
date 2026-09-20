@@ -162,5 +162,5 @@ export function render(container, state) {
     svg.call(zoom.transform, top.transform ?? home());
     if (top.selected) select(top.selected);
 
-    return { svg: svg.node(), name: 'tree' };
+    return { svg: svg.node(), name: 'tree', scene: scene.node() };
 }

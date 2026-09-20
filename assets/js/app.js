@@ -229,7 +229,7 @@ ui.cancel.addEventListener('click', () => controller?.abort());
 
 /* ---------- Exports ---------- */
 
-ui.exportSvg.addEventListener('click', () => state && rendered?.svg && exportSvg(state, rendered.svg, rendered.name));
+ui.exportSvg.addEventListener('click', () => state && rendered?.svg && exportSvg(state, rendered.svg, rendered.name, rendered.scene));
 $('export-csv').addEventListener('click', () => state && exportCsv(state, activeView === 'table' ? table.currentRows(state) : state.urls));
 $('export-json').addEventListener('click', () => state && exportJson(state));
 
