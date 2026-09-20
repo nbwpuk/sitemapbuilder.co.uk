@@ -7,6 +7,8 @@ The important changes in each release of Sitemap Builder. The newest release is 
 ### Added
 - A list of the sitemap files above the views. Clear a check box to exclude a file from the diagrams, the table, the statistics, and the exports.
 - A URL that occurs in more than one file stays in the views while one of its files is included.
+- The footer shows the version number, with a link to that release in the changelog.
+- The footer has a link to the source code on GitHub.
 
 ## 1.2.0 - 2026-09-20
 

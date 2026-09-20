@@ -6,6 +6,7 @@ defined('SMB') || exit;
 /**
  * Render CHANGELOG.md as HTML. Supported: "## " and "### " headings, "- " list items,
  * paragraphs, `code`, and bare https:// links. All text is escaped first.
+ * A "## x.y.z" release heading gets the id "vx.y.z". The heading of `$current` gets a label.
  */
 function changelog_inline(string $text): string
 {
@@ -19,7 +20,7 @@ function changelog_inline(string $text): string
     );
 }
 
-function changelog_html(string $markdown): string
+function changelog_html(string $markdown, string $current = ''): string
 {
     $out = [];
     $inList = false;
@@ -38,7 +39,9 @@ function changelog_html(string $markdown): string
             $out[] = '<h3>' . changelog_inline(substr($line, 4)) . '</h3>';
         } elseif (str_starts_with($line, '## ')) {
             $closeList();
-            $out[] = '<h2>' . changelog_inline(substr($line, 3)) . '</h2>';
+            $version = preg_match('/^## (\d+\.\d+\.\d+)\b/', $line, $m) === 1 ? $m[1] : '';
+            $out[] = '<h2' . ($version !== '' ? ' id="v' . $version . '"' : '') . '>' . changelog_inline(substr($line, 3))
+                . ($version !== '' && $version === $current ? ' <span class="current-version">Current version</span>' : '') . '</h2>';
         } elseif (str_starts_with($line, '- ')) {
             if (!$inList) {
                 $out[] = '<ul>';
