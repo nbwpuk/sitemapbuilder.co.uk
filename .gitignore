@@ -1,0 +1,3 @@
+# Runtime data
+/var/*
+!/var/.htaccess
