@@ -76,7 +76,7 @@ function page_end(bool $app): void
     $version = app_version();
     ?>
 <footer class="site-footer">
-  <p>Sitemap Builder uses no cookies and no analytics. Our downloader identifies itself as <code>SitemapBuilder/1.0</code>.</p>
+  <p>Sitemap Builder uses no cookies and no analytics. Our downloader identifies itself as <code>SitemapBuilder/1.0</code> and obeys <code>robots.txt</code>. <a href="/bot">About the bot</a>.</p>
   <p>Built and hosted by <a href="https://encode.host" target="_blank" rel="noopener">EncodeDotHost</a>. <?php if ($version !== ''): ?>Version <a href="/changelog#v<?= e($version) ?>"><?= e($version) ?></a>.<?php else: ?><a href="/changelog">Changelog</a>.<?php endif; ?> <a href="https://github.com/nbwpuk/sitemapbuilder.co.uk" target="_blank" rel="noopener">Source code on GitHub</a>.</p>
 <?php if ($app): ?>
   <noscript><p>This tool needs JavaScript.</p></noscript>

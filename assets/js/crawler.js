@@ -25,14 +25,16 @@ function hostOf(url) {
 }
 
 /**
- * @param {{url?: string, text?: string, label?: string}} root  A URL, or text the user supplied.
+ * @param {{url?: string, urls?: string[], text?: string, label?: string}} root  One or more URLs, or text the user supplied.
  * @param {object} options
  * @param {(url: string, o: {signal?: AbortSignal}) => Promise<{text: string, via: string, bytes: number}>} options.fetchText
  * @param {(text: string) => {type: string, entries: object[], invalid: number}} options.parse
  * @param {(hosts: string[]) => Promise<boolean>} [options.confirmCrossHost]
+ * @param {(url: string) => Promise<boolean>} [options.checkRobots]  False if robots.txt denies the URL.
+ * @param {(host: string) => Promise<boolean>} [options.confirmRobots]  Asked one time for denied files.
  * @param {(sitemaps: object[], urlCount: number) => void} [options.onProgress]
  */
-export async function crawl(root, { fetchText, parse, limits = DEFAULT_LIMITS, signal, confirmCrossHost, onProgress }) {
+export async function crawl(root, { fetchText, parse, limits = DEFAULT_LIMITS, signal, confirmCrossHost, checkRobots, confirmRobots, onProgress }) {
     const sitemaps = [];
     const urls = [];
     const seenSitemaps = new Set();
@@ -42,8 +44,10 @@ export async function crawl(root, { fetchText, parse, limits = DEFAULT_LIMITS, s
     let duplicates = 0;
     let invalid = 0;
     let crossHostDecision = null;
+    let robotsDecision = null;
 
-    const rootHost = root.url ? hostOf(root.url) : '';
+    const rootUrls = root.urls ?? (root.url ? [root.url] : []);
+    const rootHost = rootUrls.length > 0 ? hostOf(rootUrls[0]) : '';
     const progress = () => onProgress?.(sitemaps, urls.length);
 
     function enqueue(url, parent, depth) {
@@ -63,6 +67,13 @@ export async function crawl(root, { fetchText, parse, limits = DEFAULT_LIMITS, s
             crossHostDecision = confirmCrossHost ? confirmCrossHost(host) : Promise.resolve(true);
         }
         return crossHostDecision;
+    }
+
+    function askRobots(host) {
+        if (robotsDecision === null) {
+            robotsDecision = confirmRobots ? confirmRobots(host) : Promise.resolve(false);
+        }
+        return robotsDecision;
     }
 
     function handleParsed(record, parsed) {
@@ -110,6 +121,13 @@ export async function crawl(root, { fetchText, parse, limits = DEFAULT_LIMITS, s
                 return;
             }
         }
+        if (checkRobots && !(await checkRobots(record.url))) {
+            if (!(await askRobots(host))) {
+                record.status = 'skipped';
+                record.error = 'Denied by robots.txt';
+                return;
+            }
+        }
         record.status = 'loading';
         progress();
         const result = await fetchText(record.url, { signal });
@@ -134,8 +152,8 @@ export async function crawl(root, { fetchText, parse, limits = DEFAULT_LIMITS, s
         }
     }
 
-    if (root.url) {
-        enqueue(root.url, null, 0);
+    if (rootUrls.length > 0) {
+        for (const url of rootUrls) enqueue(url, null, 0);
     } else {
         const record = { id: 0, url: root.label || 'Supplied text', parent: null, depth: 0, status: 'done', type: '', count: 0, via: 'local', bytes: root.text.length, error: '' };
         sitemaps.push(record);

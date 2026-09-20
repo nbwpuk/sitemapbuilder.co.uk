@@ -1,7 +1,8 @@
 // Entry point: input forms, crawl control, progress, view tabs, exports.
-import { el, clear, safeHttpUrl, formatNumber, formatBytes } from './safe.js';
+import { el, clear, safeHttpUrl, sitemapUrlFromInput, formatNumber, formatBytes } from './safe.js';
 import { parseSitemap } from './parser.js';
-import { fetchSitemap, bytesToText, MAX_TRANSFER_BYTES } from './fetcher.js';
+import { fetchSitemap, fetchRobotsData, bytesToText, MAX_TRANSFER_BYTES } from './fetcher.js';
+import { createRobotsLookup, robotsAllows } from './robots.js';
 import { crawl, DEFAULT_LIMITS } from './crawler.js';
 import { buildTree, buildStats, filterUrls } from './model.js';
 import { assignSectionColours, hideTooltip } from './views/common.js';
@@ -28,6 +29,7 @@ let state = null; // { result, excluded, root, urls, sitemaps, stats, classes, v
 let controller = null;
 let activeView = 'tree';
 let rendered = null;
+const lookupRobots = createRobotsLookup(fetchRobotsData);
 
 /* ---------- Tabs ---------- */
 
@@ -87,19 +89,39 @@ function showProgress(sitemaps, urlCount) {
     });
 }
 
-/** Ask the user one time before we download sitemap files from an unrelated host. */
-function confirmCrossHost(host) {
-    return new Promise((resolve) => {
-        ui.confirmText.textContent = `The sitemap index points to files on "${host}", which is a different host. Do you want to download these files?`;
-        const finish = (answer) => {
+/** Show the confirm dialog. The queue lets only one question be open at a time. */
+let dialogQueue = Promise.resolve();
+function confirmDialog(title, text, yes, no) {
+    const answer = dialogQueue.then(() => new Promise((resolve) => {
+        $('confirm-title').textContent = title;
+        ui.confirmText.textContent = text;
+        $('confirm-yes').textContent = yes;
+        $('confirm-no').textContent = no;
+        const finish = (value) => {
             ui.dialog.close();
-            resolve(answer);
+            resolve(value);
         };
         $('confirm-yes').onclick = () => finish(true);
         $('confirm-no').onclick = () => finish(false);
         ui.dialog.oncancel = () => resolve(false);
         ui.dialog.showModal();
-    });
+    }));
+    dialogQueue = answer;
+    return answer;
+}
+
+/** Ask the user one time before we download sitemap files from an unrelated host. */
+function confirmCrossHost(host) {
+    return confirmDialog('Sitemap on a different host',
+        `The sitemap index points to files on "${host}", which is a different host. Do you want to download these files?`,
+        'Download them', 'Skip these files');
+}
+
+/** Ask the user one time about files that robots.txt denies. Our server does not download them. */
+function confirmRobots(host) {
+    return confirmDialog('Denied by robots.txt',
+        `The robots.txt file of "${host}" does not permit the download of one or more sitemap files. Our server will not download them. Do you want your browser to try a direct download?`,
+        'Try a direct download', 'Skip these files');
 }
 
 /* ---------- Crawl ---------- */
@@ -121,17 +143,38 @@ async function run(rootSpec) {
     ui.summary.textContent = 'Start…';
 
     let result;
+    let robotsNote = '';
     try {
+        if (rootSpec.guessed) {
+            // The user typed only a domain. The Sitemap: lines in robots.txt are better than a guess.
+            ui.summary.textContent = 'Read robots.txt…';
+            const robots = await lookupRobots(rootSpec.url, { signal: controller.signal });
+            if (mine !== controller) return;
+            if (robots.sitemaps.length > 0) {
+                rootSpec = { urls: robots.sitemaps };
+                robotsNote = `The robots.txt file lists ${formatNumber(robots.sitemaps.length)} sitemap ${robots.sitemaps.length === 1 ? 'file' : 'files'}.`;
+                if (robots.sitemaps.length === 1) ui.urlField.value = robots.sitemaps[0];
+            } else {
+                robotsNote = `${robots.found ? 'The robots.txt file lists no sitemap' : 'We found no robots.txt file'}. We try ${rootSpec.url}.`;
+                ui.urlField.value = rootSpec.url;
+            }
+        }
         result = await crawl(rootSpec, {
             fetchText: fetchSitemap,
             parse: parseSitemap,
             signal: controller.signal,
             confirmCrossHost,
+            checkRobots: async (url) => robotsAllows((await lookupRobots(url, { signal: mine.signal })).rules, url),
+            confirmRobots,
             onProgress: showProgress,
         });
     } catch (error) {
         if (mine !== controller) return;
         ui.cancel.hidden = true;
+        if (error?.name === 'AbortError') {
+            ui.summary.textContent = 'You cancelled the download.';
+            return;
+        }
         ui.summary.textContent = 'We cannot read this sitemap.';
         message(error?.message || 'Unknown error', true);
         return;
@@ -140,6 +183,7 @@ async function run(rootSpec) {
     ui.cancel.hidden = true;
     showProgress(result.sitemaps, result.urls.length);
 
+    if (robotsNote) message(robotsNote);
     for (const note of result.notes) message(NOTE_TEXT[note] ?? note);
     if (result.aborted) message('You cancelled the download. The views show the URLs that we found before that.');
     const failed = result.sitemaps.filter((s) => s.status === 'error');
@@ -244,13 +288,14 @@ function renderView() {
 
 $('in-url').addEventListener('submit', (event) => {
     event.preventDefault();
-    const url = safeHttpUrl(ui.urlField.value);
-    if (url === null) {
-        ui.urlField.setCustomValidity('Enter a full http:// or https:// address.');
+    const input = sitemapUrlFromInput(ui.urlField.value);
+    if (input === null) {
+        ui.urlField.setCustomValidity('Enter a domain or a sitemap address, for example example.com/sitemap.xml.');
         ui.urlField.reportValidity();
         return;
     }
-    run({ url });
+    if (!input.guessed) ui.urlField.value = input.url; // Show the address that we download.
+    run(input);
 });
 ui.urlField.addEventListener('input', () => ui.urlField.setCustomValidity(''));
 

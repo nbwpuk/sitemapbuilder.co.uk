@@ -10,19 +10,60 @@ defined('SMB') || exit;
 final class SafeFetcher
 {
     private const SNIFF_BYTES = 8192;
+    private const ROBOTS_MAX_BYTES = 512 * 1024; // RFC 9309 requires a minimum of 500 KiB.
 
     public function __construct(private readonly UrlGuard $guard, private readonly array $config)
     {
     }
 
-    /** @throws GuardException */
-    public function fetch(string $url): string
+    /**
+     * @param ?callable(array): void $check Called with the validated parts of each hop. It throws to refuse the hop.
+     * @throws GuardException
+     */
+    public function fetch(string $url, ?callable $check = null): string
+    {
+        [$status, $body] = $this->follow($url, $this->config['max_bytes'], true, $check);
+        if ($status !== 200) {
+            throw new GuardException('upstream_status', $status);
+        }
+        if (!self::looksLikeSitemap($body)) {
+            throw new GuardException('not_sitemap');
+        }
+        return $body;
+    }
+
+    /**
+     * The robots.txt text of the origin in `$parts`, or null if the file is absent or not available.
+     * A file above the size limit is cut at the limit.
+     */
+    public function fetchRobots(array $parts): ?string
+    {
+        $host = str_contains($parts['host'], ':') ? '[' . $parts['host'] . ']' : $parts['host'];
+        $url = $parts['scheme'] . '://' . $host . ':' . $parts['port'] . '/robots.txt';
+        try {
+            [$status, $body] = $this->follow($url, self::ROBOTS_MAX_BYTES, false, null);
+        } catch (GuardException) {
+            return null;
+        }
+        return $status === 200 ? $body : null;
+    }
+
+    /**
+     * Follow redirects to the final response.
+     *
+     * @return array{int, string} status, body
+     * @throws GuardException
+     */
+    private function follow(string $url, int $max, bool $sitemap, ?callable $check): array
     {
         for ($hop = 0; $hop <= $this->config['max_redirects']; $hop++) {
             $parts = $this->guard->parse($url);
+            if ($check !== null) {
+                $check($parts);
+            }
             $ip = $parts['isIp'] ? null : $this->guard->resolve($parts['host']);
 
-            [$status, $location, $body] = $this->request($parts, $ip);
+            [$status, $location, $body] = $this->request($parts, $ip, $max, $sitemap);
 
             if (in_array($status, [301, 302, 303, 307, 308], true)) {
                 if ($location === '') {
@@ -31,19 +72,16 @@ final class SafeFetcher
                 $url = self::resolveLocation($parts, $location);
                 continue;
             }
-            if ($status !== 200) {
-                throw new GuardException('upstream_status', $status);
-            }
-            if (!self::looksLikeSitemap($body)) {
-                throw new GuardException('not_sitemap');
-            }
-            return $body;
+            return [$status, $body];
         }
         throw new GuardException('too_many_redirects');
     }
 
-    /** @return array{int, string, string} status, Location header, body */
-    private function request(array $parts, ?string $ip): array
+    /**
+     * @param bool $sitemap True: refuse data that is not a sitemap or is too large. False: cut the data at `$max`.
+     * @return array{int, string, string} status, Location header, body
+     */
+    private function request(array $parts, ?string $ip, int $max, bool $sitemap): array
     {
         $body = '';
         $location = '';
@@ -51,7 +89,7 @@ final class SafeFetcher
         $failure = '';
         $sniffed = false;
         $discarded = 0;
-        $max = $this->config['max_bytes'];
+        $cut = false;
 
         $ch = curl_init();
         $options = [
@@ -62,7 +100,7 @@ final class SafeFetcher
             CURLOPT_LOW_SPEED_LIMIT => 1024,
             CURLOPT_LOW_SPEED_TIME => 10,
             CURLOPT_USERAGENT => $this->config['user_agent'],
-            CURLOPT_HTTPHEADER => ['Accept: application/xml, text/xml, application/gzip, */*;q=0.1'],
+            CURLOPT_HTTPHEADER => [$sitemap ? 'Accept: application/xml, text/xml, application/gzip, */*;q=0.1' : 'Accept: text/plain, */*;q=0.1'],
             CURLOPT_PROXY => '',
             CURLOPT_SSL_VERIFYPEER => true,
             CURLOPT_SSL_VERIFYHOST => 2,
@@ -76,7 +114,7 @@ final class SafeFetcher
                 }
                 return strlen($line);
             },
-            CURLOPT_WRITEFUNCTION => static function ($ch, string $chunk) use (&$body, &$status, &$failure, &$sniffed, &$discarded, $max): int {
+            CURLOPT_WRITEFUNCTION => static function ($ch, string $chunk) use (&$body, &$status, &$failure, &$sniffed, &$discarded, &$cut, $max, $sitemap): int {
                 if ($status >= 300) {
                     // Redirect and error bodies are not used. Stop if one is large.
                     $discarded += strlen($chunk);
@@ -84,11 +122,16 @@ final class SafeFetcher
                 }
                 $body .= $chunk;
                 if (strlen($body) > $max) {
-                    $failure = 'too_large';
+                    if ($sitemap) {
+                        $failure = 'too_large';
+                    } else {
+                        $body = substr($body, 0, $max);
+                        $cut = true;
+                    }
                     return -1;
                 }
                 // Check the content early, thus we do not download a large file that is not a sitemap.
-                if (!$sniffed && strlen($body) >= self::SNIFF_BYTES) {
+                if ($sitemap && !$sniffed && strlen($body) >= self::SNIFF_BYTES) {
                     $sniffed = true;
                     if (!self::looksLikeSitemap($body)) {
                         $failure = 'not_sitemap';
@@ -122,7 +165,7 @@ final class SafeFetcher
         if ($failure !== '') {
             throw new GuardException($failure);
         }
-        if ($ok === false && $status < 300) {
+        if ($ok === false && $status < 300 && !$cut) {
             throw new GuardException('upstream_error');
         }
         return [$status, $location, $body];

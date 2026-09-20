@@ -8,10 +8,12 @@ when the target site blocks direct browser access (CORS).
 
 ## How it works
 
-1. The browser tries to download the sitemap directly.
-2. If the browser blocks that (no CORS header, or an `http:` target), the browser asks `api/fetch.php`.
-3. The browser reads the XML, follows index files (with limits), and builds the views.
-4. The user can also paste XML or upload a `.xml`, `.xml.gz`, or `.txt` file. These paths use no server.
+1. The user types a sitemap address. A missing `https://` is added. For a bare domain, the tool reads the `Sitemap:` lines in `robots.txt`. If there are none, it uses `/sitemap.xml`.
+2. Before each download, the browser asks the proxy for the `robots.txt` rules of the host (one time for each host). If a rule denies the file, the user must confirm a direct download, and the proxy refuses the file.
+3. The browser tries to download the sitemap directly.
+4. If the browser blocks that (no CORS header, or an `http:` target), the browser asks `api/fetch.php`.
+5. The browser reads the XML, follows index files (with limits), and builds the views.
+6. The user can also paste XML or upload a `.xml`, `.xml.gz`, or `.txt` file. These paths use no server.
 
 ## Layout
 
@@ -19,13 +21,14 @@ when the target site blocks direct browser access (CORS).
 |---|---|
 | `index.php` | Main page. Reads no user input. |
 | `changelog.php` | Changelog page at `/changelog`. It renders `CHANGELOG.md`. |
+| `bot.php` | Information for site owners at `/bot`. The proxy User-Agent links to it. |
 | `CHANGELOG.md` | The release notes. Add a new `## version - date` section at the top for each release. The top section gives the version number in the footer. |
 | `.htaccess` | Security headers, deny rules, versioned-asset rewrite, cache rules. |
-| `api/fetch.php` | The proxy endpoint. |
-| `src/` | Shared page layout (`layout.php`, which also calculates the asset version), the changelog renderer, and the proxy classes: `UrlGuard`, `SafeFetcher`, `RateLimiter`, `config.php`. No web access. |
+| `api/fetch.php` | The proxy endpoint. `mode=robots` gives the `robots.txt` data of an origin as JSON. |
+| `src/` | Shared page layout (`layout.php`, which also calculates the asset version), the changelog renderer, and the proxy classes: `UrlGuard`, `SafeFetcher`, `Robots`, `RobotsPolicy`, `RateLimiter`, `config.php`. No web access. |
 | `assets/js/` | ES modules. No build step. |
 | `assets/vendor/` | D3 7.9.0, local copy. `VENDOR.md` records the source and SHA-256. |
-| `var/` | Rate-limit counters. No web access. Not in git. |
+| `var/` | Rate-limit counters and the `robots.txt` cache. No web access. Not in git. |
 | `tests/` | Tests, fixtures, and the development router. No web access. |
 
 ## Deploy (cPanel)
@@ -61,7 +64,8 @@ Sitemap content is hostile input. The proxy is a possible tool for abuse. These 
 | SSRF to internal hosts or cloud metadata | `UrlGuard`: http/https only, ports 80/443 only, no credentials, strict hostname form, all resolved addresses must be public (IPv4 and IPv6 block lists plus `filter_var`). |
 | DNS rebinding | cURL is pinned to the validated address (`CURLOPT_RESOLVE`). cURL gets a URL made from the validated parts, not the raw input. After the transfer, the connected address must be the validated address. Hosts with a trailing dot are refused. |
 | Redirect to an internal host | Redirects are followed manually (maximum 3). Each hop is validated again. |
-| Open proxy, content relay | The response must start as a `<urlset>` or `<sitemapindex>` document (gzip is inflated for the check). HTML, SVG, JSON, and a DOCTYPE are refused. |
+| Open proxy, content relay | The response must start as a `<urlset>` or `<sitemapindex>` document (gzip is inflated for the check). HTML, SVG, JSON, and a DOCTYPE are refused. The raw `robots.txt` text is never sent: `mode=robots` gives only valid `Sitemap:` addresses and the rules for our agent. |
+| Downloads that the site owner denies | The proxy obeys `robots.txt` (RFC 9309) on each redirect hop: the `SitemapBuilder` group, or the `*` group. The data is kept for 1 hour, maximum 512 KB. If `robots.txt` is absent or not available, all paths are permitted. `/bot` tells site owners how to block the proxy. |
 | Proxy response runs in a browser | `application/octet-stream`, `nosniff`, `Content-Disposition: attachment`, CSP `sandbox`. |
 | Use of the proxy from other sites | `Sec-Fetch-Site: same-origin` (or a same-host Origin/Referer) is necessary. No CORS headers are sent. |
 | DoS relay, bandwidth abuse | For each client: 60 requests / 5 minutes and 200 MB / hour. Global: 600 requests / 5 minutes. 15 MB for each file. 20 s timeout. Honest User-Agent (`SitemapBuilder/1.0`), thus site owners can block it. |
@@ -92,6 +96,7 @@ php -S 127.0.0.1:8081 tests/fixtures/router.php
 # Tests
 node --test tests/*.test.mjs
 php tests/urlguard_test.php
+php tests/robots_test.php
 ```
 
 The proxy refuses `127.0.0.1` by design, thus local fixtures work only through the direct (CORS) path.

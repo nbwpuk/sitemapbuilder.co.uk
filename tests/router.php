@@ -47,6 +47,10 @@ if ($path === '/changelog' || $path === '/changelog/' || $path === '/changelog.p
     require $root . '/changelog.php';
     return true;
 }
+if ($path === '/bot' || $path === '/bot/' || $path === '/bot.php') {
+    require $root . '/bot.php';
+    return true;
+}
 if ($path === '/api/fetch.php') {
     require $root . '/api/fetch.php';
     return true;
