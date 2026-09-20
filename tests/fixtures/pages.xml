@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9" xmlns:image="http://www.google.com/schemas/sitemap-image/1.1">
+ <url><loc>https://www.example-shop.test/</loc><lastmod>2026-08-01</lastmod><priority>0.8</priority></url>
+ <url><loc>https://www.example-shop.test/about/</loc><lastmod>2026-08-01</lastmod><priority>0.8</priority></url>
+ <url><loc>https://www.example-shop.test/contact/</loc><lastmod>2026-08-01</lastmod><priority>0.8</priority></url>
+ <url><loc>https://www.example-shop.test/about/team/</loc><lastmod>2026-08-01</lastmod><priority>0.8</priority></url>
+ <url><loc>https://www.example-shop.test/about/careers/</loc><lastmod>2026-08-01</lastmod><priority>0.8</priority></url>
+ <url><loc>https://www.example-shop.test/legal/privacy/</loc><lastmod>2026-08-01</lastmod><priority>0.8</priority></url>
+ <url><loc>https://www.example-shop.test/legal/terms/</loc><lastmod>2026-08-01</lastmod><priority>0.8</priority></url>
+ <url><loc>https://www.example-shop.test/help/</loc><lastmod>2026-08-01</lastmod><priority>0.8</priority></url>
+ <url><loc>https://www.example-shop.test/help/shipping/</loc><lastmod>2026-08-01</lastmod><priority>0.8</priority></url>
+ <url><loc>https://www.example-shop.test/help/returns/</loc><lastmod>2026-08-01</lastmod><priority>0.8</priority></url>
+</urlset>

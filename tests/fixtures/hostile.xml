@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9" xmlns:image="http://www.google.com/schemas/sitemap-image/1.1">
+ <url><loc>javascript:alert(1)</loc></url>
+ <url><loc>data:text/html,&lt;script&gt;alert(1)&lt;/script&gt;</loc></url>
+ <url><loc>https://www.example-shop.test/x/&lt;script&gt;alert(document.domain)&lt;/script&gt;</loc></url>
+ <url><loc>https://www.example-shop.test/x/&lt;img src=x onerror=alert(1)&gt;/&quot;&gt;&lt;svg onload=alert(2)&gt;</loc></url>
+ <url><loc>https://www.example-shop.test/x/=HYPERLINK(&quot;http://evil&quot;)</loc><lastmod>&lt;b&gt;bad&lt;/b&gt;</lastmod><priority>9</priority></url>
+</urlset>

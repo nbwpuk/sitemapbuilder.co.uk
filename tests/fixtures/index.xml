@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<sitemapindex xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+ <sitemap><loc>http://127.0.0.1:8081/pages.xml</loc></sitemap>
+ <sitemap><loc>http://127.0.0.1:8081/posts.xml.gz</loc></sitemap>
+ <sitemap><loc>http://127.0.0.1:8081/shop.xml</loc></sitemap>
+ <sitemap><loc>http://127.0.0.1:8081/hostile.xml</loc></sitemap>
+ <sitemap><loc>http://127.0.0.1:8081/missing.xml</loc></sitemap>
+ <sitemap><loc>http://127.0.0.1:8081/index.xml</loc></sitemap>
+</sitemapindex>
