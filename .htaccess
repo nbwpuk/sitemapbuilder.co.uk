@@ -11,6 +11,13 @@ ServerSignature Off
 
     # Private paths. .well-known stays open for AutoSSL certificate checks.
     RewriteRule ^\.well-known/ - [L]
+
+    # One canonical address: https://www.sitemapbuilder.co.uk (301).
+    # The host condition keeps development copies on other host names free of this rule.
+    RewriteCond %{HTTP_HOST} ^(www\.)?sitemapbuilder\.co\.uk$ [NC]
+    RewriteCond %{HTTPS} !=on [OR]
+    RewriteCond %{HTTP_HOST} !^www\. [NC]
+    RewriteRule ^ https://www.sitemapbuilder.co.uk%{REQUEST_URI} [R=301,L]
     RewriteRule (^|/)\. - [R=404,L]
     RewriteRule ^(src|var|tests)(/|$) - [R=404,L,NC]
     RewriteRule \.(md|sh|ini|json|lock|log|sql|bak|orig|swp)$ - [R=404,L,NC]
