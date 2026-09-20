@@ -59,6 +59,11 @@ page_start(
     <h2 id="results-title" class="visually-hidden">Results</h2>
     <div id="tiles" class="tiles"></div>
 
+    <details id="sitemap-filter" class="panel sitemap-filter" hidden>
+      <summary id="sitemap-filter-summary">Sitemap files in the views</summary>
+      <div id="sitemap-filter-list"></div>
+    </details>
+
     <div class="panel">
       <div class="panel-head">
         <div class="tabs" role="tablist" aria-label="View">

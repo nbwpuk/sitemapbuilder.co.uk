@@ -15,6 +15,24 @@ export function segmentsOf(url) {
     return segments;
 }
 
+/**
+ * URLs that stay when the user excludes sitemap files. A URL stays if one or more of its files is included.
+ * If the first file of a URL is excluded, the result has a copy that names the first included file.
+ */
+export function filterUrls(urls, excluded) {
+    if (excluded.size === 0) return urls;
+    const kept = [];
+    for (const entry of urls) {
+        if (!excluded.has(entry.sitemap)) {
+            kept.push(entry);
+            continue;
+        }
+        const other = entry.also?.find((id) => !excluded.has(id));
+        if (other !== undefined) kept.push({ ...entry, sitemap: other });
+    }
+    return kept;
+}
+
 function makeNode(name, parent) {
     return { name, parent, childMap: new Map(), children: [], count: 0, entry: null, section: null, depth: parent ? parent.depth + 1 : 0 };
 }
@@ -90,11 +108,12 @@ function tally(map, key) {
 }
 
 export function buildStats(result, root) {
-    const { urls, sitemaps } = result;
+    const { urls, sitemaps, excluded } = result;
     const hosts = new Map();
     const depths = new Map();
     const months = new Map();
     const changefreq = new Map();
+    const perSitemap = new Map();
     let withLastmod = 0;
     let images = 0;
     let videos = 0;
@@ -107,6 +126,7 @@ export function buildStats(result, root) {
             continue;
         }
         tally(depths, entry.depth ?? 0);
+        tally(perSitemap, entry.sitemap);
         if (entry.lastmod) {
             withLastmod++;
             tally(months, entry.lastmod.slice(0, 7));
@@ -146,6 +166,7 @@ export function buildStats(result, root) {
     return {
         totalUrls: urls.length,
         sitemapCount: sitemaps.length,
+        excludedSitemaps: excluded?.size ?? 0,
         failedSitemaps: sitemaps.filter((s) => s.status === 'error').length,
         hostCount: hosts.size,
         duplicates: result.duplicates,
@@ -161,8 +182,8 @@ export function buildStats(result, root) {
         changefreqSeries: [...changefreq].map(([label, value]) => ({ label, value })).sort((a, b) => b.value - a.value),
         sectionSeries: root.children.map((child) => ({ label: (root.name === 'All hosts' ? '' : '/') + child.name, value: child.count })),
         sitemapSeries: sitemaps
-            .filter((s) => s.type === 'urlset')
-            .map((s) => ({ label: s.url, value: s.count }))
+            .filter((s) => s.type === 'urlset' && !excluded?.has(s.id))
+            .map((s) => ({ label: s.url, value: perSitemap.get(s.id) ?? 0 }))
             .sort((a, b) => b.value - a.value),
     };
 }

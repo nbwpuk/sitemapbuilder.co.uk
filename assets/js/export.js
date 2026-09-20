@@ -32,7 +32,7 @@ export function exportJson(state) {
     });
     const data = {
         generator: 'sitemapbuilder.co.uk',
-        sitemaps: state.sitemaps.map(({ url, type, status, count, error }) => ({ url, type, status, count, error: error || undefined })),
+        sitemaps: state.sitemaps.map(({ id, url, type, status, count, error }) => ({ url, type, status, count, error: error || undefined, excluded: state.excluded.has(id) || undefined })),
         tree: toPlain(state.root),
     };
     download(`${fileStem(state)}.json`, 'application/json', JSON.stringify(data, null, 1));

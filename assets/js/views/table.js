@@ -34,7 +34,7 @@ export function render(container, state) {
     search.value = vs.text;
     const select = el('select', { 'aria-label': 'Filter by sitemap' }, el('option', { value: '', text: 'All sitemaps' }));
     for (const s of state.sitemaps) {
-        if (s.type === 'urlset') select.append(el('option', { value: String(s.id), text: `${shortSitemapName(s.url)} (${formatNumber(s.count)})` }));
+        if (s.type === 'urlset' && !state.excluded.has(s.id)) select.append(el('option', { value: String(s.id), text: `${shortSitemapName(s.url)} (${formatNumber(s.count)})` }));
     }
     select.value = vs.sitemap;
     const count = el('span', { class: 'count', role: 'status' });

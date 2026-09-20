@@ -3,7 +3,7 @@ import { el, clear, safeHttpUrl, formatNumber, formatBytes } from './safe.js';
 import { parseSitemap } from './parser.js';
 import { fetchSitemap, bytesToText, MAX_TRANSFER_BYTES } from './fetcher.js';
 import { crawl, DEFAULT_LIMITS } from './crawler.js';
-import { buildTree, buildStats } from './model.js';
+import { buildTree, buildStats, filterUrls } from './model.js';
 import { assignSectionColours, hideTooltip } from './views/common.js';
 import { exportCsv, exportJson, exportSvg } from './export.js';
 import * as tree from './views/tree.js';
@@ -20,10 +20,11 @@ const ui = {
     progress: $('progress'), summary: $('progress-summary'), list: $('progress-list'), messages: $('messages'),
     details: $('progress-details'), cancel: $('cancel-btn'),
     results: $('results'), tiles: $('tiles'), view: $('view'),
+    filter: $('sitemap-filter'), filterSummary: $('sitemap-filter-summary'), filterList: $('sitemap-filter-list'),
     exportSvg: $('export-svg'), dialog: $('confirm-dialog'), confirmText: $('confirm-text'),
 };
 
-let state = null; // { root, urls, sitemaps, stats, classes, viewState }
+let state = null; // { result, excluded, root, urls, sitemaps, stats, classes, viewState }
 let controller = null;
 let activeView = 'tree';
 let rendered = null;
@@ -150,20 +151,65 @@ async function run(rootSpec) {
         return;
     }
 
-    const root = buildTree(result.urls);
-    state = {
-        root,
-        urls: result.urls,
-        sitemaps: result.sitemaps,
-        stats: buildStats(result, root),
-        classes: assignSectionColours(root),
-        viewState: {},
-    };
+    state = { result, excluded: new Set(), sitemaps: result.sitemaps };
+    applyFilter();
     ui.details.open = failed.length > 0;
     ui.results.hidden = false;
+    renderFilter();
+    ui.results.scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+/* ---------- Sitemap filter ---------- */
+
+/** Build the tree and the statistics again from the included sitemap files, then show them. */
+function applyFilter() {
+    const urls = filterUrls(state.result.urls, state.excluded);
+    const root = buildTree(urls);
+    Object.assign(state, {
+        root,
+        urls,
+        stats: buildStats({ ...state.result, urls, excluded: state.excluded }, root),
+        classes: assignSectionColours(root),
+        viewState: {}, // The old view state points into the old tree.
+    });
     renderTiles();
     renderView();
-    ui.results.scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+function renderFilter() {
+    const files = state.sitemaps.filter((s) => s.type === 'urlset' && s.count > 0);
+    ui.filter.hidden = files.length < 2;
+    ui.filter.open = false;
+    if (files.length < 2) return;
+
+    const boxes = [];
+    const summary = () => {
+        ui.filterSummary.textContent = `Sitemap files in the views: ${formatNumber(files.length - state.excluded.size)} of ${formatNumber(files.length)}`;
+    };
+    const setAll = (checked) => {
+        for (const box of boxes) box.checked = checked;
+        state.excluded = new Set(checked ? [] : files.map((s) => s.id));
+        summary();
+        applyFilter();
+    };
+    const items = files.map((s) => {
+        const box = el('input', { type: 'checkbox' });
+        box.checked = true;
+        box.addEventListener('change', () => {
+            if (box.checked) state.excluded.delete(s.id);
+            else state.excluded.add(s.id);
+            summary();
+            applyFilter();
+        });
+        boxes.push(box);
+        return el('li', {}, el('label', {}, box, el('span', { class: 'url', title: s.url, text: s.url }), el('span', { class: 'meta', text: `${formatNumber(s.count)} URLs` })));
+    });
+    const all = el('button', { type: 'button', text: 'Include all' });
+    const none = el('button', { type: 'button', text: 'Exclude all' });
+    all.addEventListener('click', () => setAll(true));
+    none.addEventListener('click', () => setAll(false));
+    clear(ui.filterList).append(el('div', { class: 'filter-actions' }, all, none), el('ul', { class: 'progress-list filter-list' }, ...items));
+    summary();
 }
 
 function renderTiles() {
@@ -173,7 +219,7 @@ function renderTiles() {
     const percent = s.totalUrls > 0 ? Math.floor((s.withLastmod / s.totalUrls) * 100) : 0;
     clear(ui.tiles).append(
         tile('URLs', formatNumber(s.totalUrls), s.duplicates > 0 ? `${formatNumber(s.duplicates)} ${s.duplicates === 1 ? 'duplicate' : 'duplicates'} removed` : 'No duplicates'),
-        tile('Sitemap files', formatNumber(s.sitemapCount), s.failedSitemaps > 0 ? `${formatNumber(s.failedSitemaps)} failed` : 'All read'),
+        tile('Sitemap files', formatNumber(s.sitemapCount), [s.failedSitemaps > 0 ? `${formatNumber(s.failedSitemaps)} failed` : 'All read', s.excludedSitemaps > 0 ? `${formatNumber(s.excludedSitemaps)} excluded` : ''].filter(Boolean).join(' · ')),
         tile('Hosts', formatNumber(s.hostCount)),
         tile('Deepest path', formatNumber(s.maxDepth), 'levels below the home page'),
         tile('With lastmod', `${percent}%`, `${formatNumber(s.withLastmod)} URLs`),
@@ -184,6 +230,12 @@ function renderTiles() {
 function renderView() {
     if (!state) return;
     hideTooltip();
+    if (state.urls.length === 0) {
+        rendered = null;
+        clear(ui.view).append(el('p', { class: 'message', text: 'All sitemap files are excluded. Include one or more files to see the views.' }));
+        ui.exportSvg.disabled = true;
+        return;
+    }
     rendered = VIEWS[activeView].render(ui.view, state);
     ui.exportSvg.disabled = !rendered?.svg;
 }

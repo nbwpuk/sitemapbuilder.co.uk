@@ -2,7 +2,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { safeHttpUrl, csvCell, toCsv } from '../assets/js/safe.js';
-import { buildTree, buildStats, pathOf } from '../assets/js/model.js';
+import { buildTree, buildStats, pathOf, filterUrls } from '../assets/js/model.js';
 import { crawl, relatedHosts } from '../assets/js/crawler.js';
 
 test('safeHttpUrl permits only http(s) without credentials', () => {
@@ -90,6 +90,33 @@ test('crawl follows an index, removes duplicates, and records failures', async (
     assert.equal(result.duplicates, 1);
     assert.equal(result.sitemaps.length, 4);
     assert.equal(result.sitemaps.find((s) => s.url.endsWith('missing.xml')).status, 'error');
+});
+
+test('filterUrls keeps a URL while one of its sitemap files is included', async () => {
+    const site = fakeSite({
+        'https://ex.com/sitemap.xml': index('https://ex.com/pages.xml', 'https://ex.com/posts.xml'),
+        'https://ex.com/pages.xml': urlset('https://ex.com/', 'https://ex.com/about'),
+        'https://ex.com/posts.xml': urlset('https://ex.com/about', 'https://ex.com/p/1'),
+    });
+    const result = await crawl({ url: 'https://ex.com/sitemap.xml' }, { ...site, limits: { maxDepth: 3, maxSitemaps: 500, maxUrls: 1000, concurrency: 1 } });
+    const pages = result.sitemaps.find((s) => s.url.endsWith('pages.xml')).id;
+    const posts = result.sitemaps.find((s) => s.url.endsWith('posts.xml')).id;
+
+    assert.equal(filterUrls(result.urls, new Set()), result.urls);
+
+    const noPages = filterUrls(result.urls, new Set([pages]));
+    assert.deepEqual(noPages.map((e) => e.loc), ['https://ex.com/about', 'https://ex.com/p/1']);
+    assert.ok(noPages.every((e) => e.sitemap === posts));
+    assert.equal(result.urls.find((e) => e.loc.endsWith('/about')).sitemap, pages); // No change to the source entry.
+
+    assert.deepEqual(filterUrls(result.urls, new Set([posts])).map((e) => e.loc), ['https://ex.com/', 'https://ex.com/about']);
+    assert.equal(filterUrls(result.urls, new Set([pages, posts])).length, 0);
+
+    const excluded = new Set([pages]);
+    const stats = buildStats({ ...result, urls: noPages, excluded }, buildTree(noPages));
+    assert.equal(stats.totalUrls, 2);
+    assert.equal(stats.excludedSitemaps, 1);
+    assert.deepEqual(stats.sitemapSeries, [{ label: 'https://ex.com/posts.xml', value: 2 }]);
 });
 
 test('crawl survives a cycle and obeys the depth limit', async () => {
