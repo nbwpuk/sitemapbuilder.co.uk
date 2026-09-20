@@ -43,6 +43,10 @@ if ($path === '/' || $path === '/index.php') {
     require $root . '/index.php';
     return true;
 }
+if ($path === '/changelog' || $path === '/changelog/' || $path === '/changelog.php') {
+    require $root . '/changelog.php';
+    return true;
+}
 if ($path === '/api/fetch.php') {
     require $root . '/api/fetch.php';
     return true;
