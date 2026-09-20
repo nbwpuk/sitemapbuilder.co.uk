@@ -29,6 +29,13 @@ function asset_prefix(): string
     return '/assets/v-' . asset_version(dirname(__DIR__) . '/assets');
 }
 
+/** The version of the newest release: the first "## x.y.z" heading in CHANGELOG.md. Empty if there is none. */
+function app_version(): string
+{
+    $markdown = (string) @file_get_contents(dirname(__DIR__) . '/CHANGELOG.md');
+    return preg_match('/^## (\d+\.\d+\.\d+)\b/m', $markdown, $m) === 1 ? $m[1] : '';
+}
+
 function e(string $text): string
 {
     return htmlspecialchars($text, ENT_QUOTES | ENT_SUBSTITUTE | ENT_HTML5, 'UTF-8');
@@ -66,10 +73,11 @@ function page_start(string $title, string $description, bool $app): void
 
 function page_end(bool $app): void
 {
+    $version = app_version();
     ?>
 <footer class="site-footer">
   <p>Sitemap Builder uses no cookies and no analytics. Our downloader identifies itself as <code>SitemapBuilder/1.0</code>.</p>
-  <p>Built and hosted by <a href="https://encode.host" target="_blank" rel="noopener">EncodeDotHost</a>. <a href="/changelog">Changelog</a>.</p>
+  <p>Built and hosted by <a href="https://encode.host" target="_blank" rel="noopener">EncodeDotHost</a>. <?php if ($version !== ''): ?>Version <a href="/changelog#v<?= e($version) ?>"><?= e($version) ?></a>.<?php else: ?><a href="/changelog">Changelog</a>.<?php endif; ?> <a href="https://github.com/nbwpuk/sitemapbuilder.co.uk" target="_blank" rel="noopener">Source code on GitHub</a>.</p>
 <?php if ($app): ?>
   <noscript><p>This tool needs JavaScript.</p></noscript>
 <?php endif; ?>

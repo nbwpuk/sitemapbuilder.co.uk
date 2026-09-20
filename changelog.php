@@ -18,7 +18,7 @@ page_start(
 <main>
   <article class="panel prose">
     <h1>Changelog</h1>
-<?= $markdown === '' ? '    <p>The changelog is not available.</p>' : changelog_html($markdown) ?>
+<?= $markdown === '' ? '    <p>The changelog is not available.</p>' : changelog_html($markdown, app_version()) ?>
 
     <p class="back"><a href="/">Back to Sitemap Builder</a></p>
   </article>

@@ -19,7 +19,7 @@ when the target site blocks direct browser access (CORS).
 |---|---|
 | `index.php` | Main page. Reads no user input. |
 | `changelog.php` | Changelog page at `/changelog`. It renders `CHANGELOG.md`. |
-| `CHANGELOG.md` | The release notes. Add a new `## version - date` section at the top for each release. |
+| `CHANGELOG.md` | The release notes. Add a new `## version - date` section at the top for each release. The top section gives the version number in the footer. |
 | `.htaccess` | Security headers, deny rules, versioned-asset rewrite, cache rules. |
 | `api/fetch.php` | The proxy endpoint. |
 | `src/` | Shared page layout (`layout.php`, which also calculates the asset version), the changelog renderer, and the proxy classes: `UrlGuard`, `SafeFetcher`, `RateLimiter`, `config.php`. No web access. |
