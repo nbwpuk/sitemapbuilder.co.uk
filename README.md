@@ -17,10 +17,12 @@ when the target site blocks direct browser access (CORS).
 
 | Path | Function |
 |---|---|
-| `index.php` | Page shell. Calculates the asset version. Reads no user input. |
+| `index.php` | Main page. Reads no user input. |
+| `changelog.php` | Changelog page at `/changelog`. It renders `CHANGELOG.md`. |
+| `CHANGELOG.md` | The release notes. Add a new `## version - date` section at the top for each release. |
 | `.htaccess` | Security headers, deny rules, versioned-asset rewrite, cache rules. |
 | `api/fetch.php` | The proxy endpoint. |
-| `src/` | Proxy classes: `UrlGuard`, `SafeFetcher`, `RateLimiter`, `config.php`. No web access. |
+| `src/` | Shared page layout (`layout.php`, which also calculates the asset version), the changelog renderer, and the proxy classes: `UrlGuard`, `SafeFetcher`, `RateLimiter`, `config.php`. No web access. |
 | `assets/js/` | ES modules. No build step. |
 | `assets/vendor/` | D3 7.9.0, local copy. `VENDOR.md` records the source and SHA-256. |
 | `var/` | Rate-limit counters. No web access. Not in git. |

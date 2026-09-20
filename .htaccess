@@ -26,6 +26,9 @@ ServerSignature Off
     RewriteCond %{REQUEST_URI} !^/api/fetch\.php$
     RewriteRule ^api(/|$) - [R=404,L,NC]
 
+    # Pages without the .php extension.
+    RewriteRule ^changelog/?$ changelog.php [L]
+
     # Cache busting: /assets/v-<hash>/js/app.js -> /assets/js/app.js
     # Relative module imports and CSS url() values stay below the same prefix.
     RewriteRule ^assets/v-[0-9a-f]+/(.+)$ assets/$1 [L,E=VERSIONED:1]
