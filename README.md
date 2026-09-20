@@ -36,7 +36,8 @@ when the target site blocks direct browser access (CORS).
 - Do not deploy `tests/`. `.gitattributes` marks it `export-ignore`, thus `git archive` leaves it out. If you deploy with a
   plain `git pull`, the deny rules protect it, but it is better to delete it on the server.
 - The `zlib` extension is necessary for `.xml.gz` files through the proxy. Without it the proxy refuses gzip data.
-- Use HTTPS. The HSTS header is sent only on HTTPS requests.
+- `.htaccess` sends all requests to `https://www.sitemapbuilder.co.uk` with a 301. `/.well-known/` is exempt, thus AutoSSL checks work.
+  The HSTS header is sent only on HTTPS requests.
 - If your domain is not `sitemapbuilder.co.uk`, change `own_hosts` in `src/config.php`.
 
 After deployment, make sure that these URLs return 403 or 404:
