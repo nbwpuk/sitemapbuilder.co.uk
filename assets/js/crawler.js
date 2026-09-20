@@ -36,7 +36,7 @@ export async function crawl(root, { fetchText, parse, limits = DEFAULT_LIMITS, s
     const sitemaps = [];
     const urls = [];
     const seenSitemaps = new Set();
-    const seenUrls = new Set();
+    const seenUrls = new Map();
     const queue = [];
     const notes = new Set();
     let duplicates = 0;
@@ -78,15 +78,18 @@ export async function crawl(root, { fetchText, parse, limits = DEFAULT_LIMITS, s
             return;
         }
         for (const entry of parsed.entries) {
-            if (seenUrls.has(entry.loc)) {
+            const first = seenUrls.get(entry.loc);
+            if (first) {
                 duplicates++;
+                // Keep the other files that list this URL, for the include/exclude filter.
+                if (first.sitemap !== record.id && !first.also?.includes(record.id)) (first.also ??= []).push(record.id);
                 continue;
             }
             if (urls.length >= limits.maxUrls) {
                 notes.add('url_limit');
                 break;
             }
-            seenUrls.add(entry.loc);
+            seenUrls.set(entry.loc, entry);
             entry.sitemap = record.id;
             urls.push(entry);
             record.count++;

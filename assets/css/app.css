@@ -154,6 +154,10 @@ form[role="tabpanel"] > button { margin-top: 8px; }
 .progress-list li { display: grid; grid-template-columns: 84px 1fr auto; gap: 8px; padding: 3px 0; border-top: 1px solid var(--grid); }
 .progress-list .url { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-family: var(--mono); font-size: 12px; }
 .progress-list .meta { color: var(--text-secondary); white-space: nowrap; }
+.sitemap-filter > summary { cursor: pointer; font-weight: 600; }
+.filter-actions { display: flex; gap: 8px; margin-top: 8px; }
+.filter-list li { display: block; }
+.filter-list label { display: grid; grid-template-columns: auto 1fr auto; gap: 8px; align-items: center; cursor: pointer; }
 .status { font-weight: 600; }
 .status::before { content: ""; display: inline-block; width: 8px; height: 8px; border-radius: 50%; margin-right: 6px; background: var(--text-muted); }
 .status-done::before { background: var(--good); }
