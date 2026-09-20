@@ -134,8 +134,21 @@ final class UrlGuard
         if ($addresses === []) {
             throw new GuardException('dns');
         }
+        return self::pick($addresses);
+    }
+
+    /**
+     * Validate the addresses of one host and select the address for the connection.
+     * Our own address is permitted here: other sites on a shared server have the same address.
+     * parse() refuses our own host names, and the proxy refuses requests that are not same-origin.
+     *
+     * @param string[] $addresses
+     * @throws GuardException
+     */
+    public static function pick(array $addresses): string
+    {
         foreach ($addresses as $ip) {
-            if (!self::isPublicIp($ip) || in_array($ip, $this->ownAddresses, true)) {
+            if (!self::isPublicIp($ip)) {
                 throw new GuardException('blocked_host');
             }
         }
