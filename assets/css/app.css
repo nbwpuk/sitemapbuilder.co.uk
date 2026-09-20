@@ -60,14 +60,19 @@
 
 * { box-sizing: border-box; }
 
+/* Column layout: main takes the free height, thus the footer stays at the bottom on short pages. */
 body {
     margin: 0;
+    min-height: 100vh;
+    min-height: 100dvh;
+    display: flex;
+    flex-direction: column;
     background: var(--page);
     color: var(--text-primary);
     font: 15px/1.5 var(--font);
 }
 
-main { max-width: 1280px; margin: 0 auto; padding: 0 16px 32px; }
+main { flex: 1 0 auto; width: 100%; max-width: 1280px; margin: 0 auto; padding: 0 16px 32px; }
 h1, h2, h3 { margin: 0; font-weight: 600; line-height: 1.25; }
 h1 { font-size: 20px; }
 h2 { font-size: 17px; }
@@ -93,7 +98,9 @@ code { font-family: var(--mono); font-size: 0.92em; }
 .tagline { margin: 0; color: var(--text-secondary); }
 @media (min-width: 720px) { .tagline { margin-left: auto; } }
 @media (max-width: 719.98px) { .tagline { flex-basis: 100%; } }
-.site-footer { max-width: 1280px; margin: 0 auto; padding: 0 16px 32px; color: var(--text-muted); font-size: 13px; }
+.site-header, .site-footer { width: 100%; }
+.site-footer { max-width: 1280px; margin: 0 auto; padding: 12px 16px 16px; color: var(--text-muted); font-size: 13px; border-top: 1px solid var(--grid); }
+.site-footer p { margin: 4px 0; }
 
 .panel {
     background: var(--surface-1); border: 1px solid var(--border); border-radius: var(--radius);
