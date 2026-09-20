@@ -22,7 +22,7 @@ final class RateLimiter
      * If the directory `sitemapbuilder-var` exists above the web root, use it (you create it; see README).
      * If not, use var/ in the web root, where .htaccess denies web access.
      */
-    private static function storageDir(): string
+    public static function storageDir(): string
     {
         $root = dirname(__DIR__);
         $outside = dirname($root) . '/sitemapbuilder-var';

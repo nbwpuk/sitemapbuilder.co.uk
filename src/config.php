@@ -5,7 +5,7 @@ defined('SMB') || exit;
 
 // Limits only. This file contains no secrets.
 return [
-    'user_agent'        => 'SitemapBuilder/1.0 (+https://sitemapbuilder.co.uk/)',
+    'user_agent'        => 'SitemapBuilder/1.0 (+https://www.sitemapbuilder.co.uk/bot)',
     'max_bytes'         => 15 * 1024 * 1024,
     'max_redirects'     => 3,
     'connect_timeout'   => 5,

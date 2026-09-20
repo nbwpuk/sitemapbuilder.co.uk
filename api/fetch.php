@@ -4,6 +4,11 @@ declare(strict_types=1);
 // Sitemap download proxy. The browser calls it only when the target blocks a direct download (CORS).
 // GET /api/fetch.php?url=<absolute http(s) URL>
 // Success: the raw file bytes. Failure: {"error": "<code>"} with a 4xx/5xx status.
+// The proxy obeys the robots.txt file of the target.
+//
+// GET /api/fetch.php?mode=robots&url=<absolute http(s) URL>
+// Success: JSON with the Sitemap: lines and the rules for our agent from the robots.txt file of that origin.
+// The raw robots.txt text is never sent, thus the proxy relays sitemap data only.
 
 const SMB = 1;
 
@@ -12,6 +17,8 @@ set_time_limit(90);
 
 require __DIR__ . '/../src/UrlGuard.php';
 require __DIR__ . '/../src/SafeFetcher.php';
+require __DIR__ . '/../src/Robots.php';
+require __DIR__ . '/../src/RobotsPolicy.php';
 require __DIR__ . '/../src/RateLimiter.php';
 $config = require __DIR__ . '/../src/config.php';
 
@@ -77,12 +84,30 @@ if ($wait > 0) {
 $ownAddresses = array_filter([$_SERVER['SERVER_ADDR'] ?? null]);
 $guard = new UrlGuard($config['own_hosts'], $config['allowed_ports'], array_values($ownAddresses));
 
+$robotsDir = null;
 try {
-    $body = (new SafeFetcher($guard, $config))->fetch($url);
+    $robotsDir = RateLimiter::storageDir() . '/robots';
+    if (!is_dir($robotsDir) && !@mkdir($robotsDir, 0700)) {
+        $robotsDir = null;
+    }
+} catch (Throwable) {
+    // No cache directory: the policy downloads robots.txt for each request.
+}
+$fetcher = new SafeFetcher($guard, $config);
+$policy = new RobotsPolicy($fetcher, $robotsDir);
+
+try {
+    if (($_GET['mode'] ?? '') === 'robots') {
+        $body = json_encode($policy->forOrigin($guard->parse($url)), JSON_UNESCAPED_SLASHES | JSON_INVALID_UTF8_SUBSTITUTE);
+        header('Content-Type: application/json');
+        header_remove('Content-Disposition');
+    } else {
+        $body = $fetcher->fetch($url, $policy->check(...));
+    }
 } catch (GuardException $e) {
     $status = match ($e->errorCode) {
         'bad_url' => 400,
-        'blocked_host' => 403,
+        'blocked_host', 'robots_denied' => 403,
         'too_large' => 413,
         'not_sitemap' => 415,
         default => 502,

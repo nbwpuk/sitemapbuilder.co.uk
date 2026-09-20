@@ -23,7 +23,7 @@ page_start(
 
     <form id="in-url" role="tabpanel" aria-labelledby="in-tab-url" class="input-row">
       <label class="visually-hidden" for="url-field">Sitemap URL</label>
-      <input id="url-field" type="url" inputmode="url" autocomplete="off" spellcheck="false" maxlength="2048" required placeholder="https://example.com/sitemap.xml">
+      <input id="url-field" type="text" inputmode="url" autocomplete="off" spellcheck="false" maxlength="2048" required placeholder="example.com or https://example.com/sitemap.xml">
       <button type="submit" class="primary">Build</button>
     </form>
 

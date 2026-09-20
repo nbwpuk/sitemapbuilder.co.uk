@@ -15,6 +15,7 @@ const PROXY_MESSAGES = {
     upstream_error: 'We cannot connect to the server.',
     rate_limited: 'Too many requests. Wait some minutes, then try again.',
     forbidden: 'Our server refused the request.',
+    robots_denied: 'The robots.txt file of the site does not permit this download.',
 };
 
 /** Read a byte stream to the end. Stop with an error if it goes above `cap`. */
@@ -99,6 +100,17 @@ async function fetchViaProxy(url, signal) {
         throw new SitemapError(code, message);
     }
     return readResponse(response);
+}
+
+/** The Sitemap: lines and the rules for our agent from the robots.txt file of `origin`. The proxy reads the file. */
+export async function fetchRobotsData(origin, { signal } = {}) {
+    const response = await fetch('/api/fetch.php?mode=robots&url=' + encodeURIComponent(origin + '/'), {
+        signal,
+        credentials: 'omit',
+        cache: 'no-store',
+    });
+    if (!response.ok) throw new SitemapError('upstream_error', PROXY_MESSAGES.upstream_error);
+    return response.json();
 }
 
 /** @returns {Promise<{text: string, via: 'direct'|'proxy', bytes: number}>} */

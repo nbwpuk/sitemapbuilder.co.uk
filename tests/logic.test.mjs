@@ -1,9 +1,10 @@
 // Run: node --test tests/
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { safeHttpUrl, csvCell, toCsv } from '../assets/js/safe.js';
+import { safeHttpUrl, sitemapUrlFromInput, csvCell, toCsv } from '../assets/js/safe.js';
 import { buildTree, buildStats, pathOf, filterUrls } from '../assets/js/model.js';
 import { crawl, relatedHosts } from '../assets/js/crawler.js';
+import { robotsAllows, robotsMatches, cleanRobotsData, createRobotsLookup } from '../assets/js/robots.js';
 
 test('safeHttpUrl permits only http(s) without credentials', () => {
     assert.equal(safeHttpUrl(' https://example.com/a '), 'https://example.com/a');
@@ -13,6 +14,21 @@ test('safeHttpUrl permits only http(s) without credentials', () => {
     assert.equal(safeHttpUrl('https://user:pw@example.com/'), null);
     assert.equal(safeHttpUrl('https://example.com/' + 'a'.repeat(3000)), null);
     assert.equal(safeHttpUrl('not a url'), null);
+});
+
+test('sitemapUrlFromInput adds a missing scheme and the default sitemap path', () => {
+    assert.deepEqual(sitemapUrlFromInput('example.com'), { url: 'https://example.com/sitemap.xml', guessed: true });
+    assert.deepEqual(sitemapUrlFromInput(' www.example.com/ '), { url: 'https://www.example.com/sitemap.xml', guessed: true });
+    assert.deepEqual(sitemapUrlFromInput('//example.com'), { url: 'https://example.com/sitemap.xml', guessed: true });
+    assert.deepEqual(sitemapUrlFromInput('http://example.com'), { url: 'http://example.com/sitemap.xml', guessed: true });
+    assert.deepEqual(sitemapUrlFromInput('example.com:8080/maps/index.xml'), { url: 'https://example.com:8080/maps/index.xml', guessed: false });
+    assert.deepEqual(sitemapUrlFromInput('https://example.com/sitemap_index.xml'), { url: 'https://example.com/sitemap_index.xml', guessed: false });
+    assert.deepEqual(sitemapUrlFromInput('https://example.com/?feed=sitemap'), { url: 'https://example.com/?feed=sitemap', guessed: false });
+    assert.equal(sitemapUrlFromInput('javascript:alert(1)'), null);
+    assert.equal(sitemapUrlFromInput('ftp://example.com/sitemap.xml'), null);
+    assert.equal(sitemapUrlFromInput('user:pw@example.com'), null);
+    assert.equal(sitemapUrlFromInput('sitemap'), null);
+    assert.equal(sitemapUrlFromInput(''), null);
 });
 
 test('csvCell stops formula injection and quotes correctly', () => {
@@ -177,4 +193,71 @@ test('crawl accepts supplied text as the root', async () => {
     const parse = (t) => (t === 'PASTED' ? index('https://ex.com/1.xml') : site.parse(t));
     const result = await crawl({ text: 'PASTED', label: 'Pasted XML' }, { ...site, parse });
     assert.equal(result.urls.length, 1);
+});
+
+test('robotsAllows uses the longest match, and allow wins a tie', () => {
+    const rules = [
+        { allow: false, path: '/private/' },
+        { allow: true, path: '/private/sitemap.xml' },
+        { allow: false, path: '/*.gz$' },
+    ];
+    assert.equal(robotsAllows(rules, 'https://example.com/sitemap.xml'), true);
+    assert.equal(robotsAllows(rules, 'https://example.com/private/other.xml'), false);
+    assert.equal(robotsAllows(rules, 'https://example.com/private/sitemap.xml'), true);
+    assert.equal(robotsAllows(rules, 'https://example.com/maps/posts.xml.gz'), false);
+    assert.equal(robotsAllows(rules, 'https://example.com/maps/posts.xml.gz?x=1'), true);
+    assert.equal(robotsAllows([{ allow: false, path: '/a' }, { allow: true, path: '/a' }], 'https://example.com/a/b'), true);
+    assert.equal(robotsAllows([], 'https://example.com/'), true);
+    assert.equal(robotsMatches('/ab*b$', '/ab'), false);
+    assert.equal(robotsMatches('/ab*b$', '/abb'), true);
+    assert.equal(robotsMatches('/a*/b*c', '/axx/bxxc/d'), true);
+});
+
+test('cleanRobotsData keeps only safe data', () => {
+    const data = cleanRobotsData({
+        found: true,
+        sitemaps: ['https://example.com/a.xml', 'javascript:alert(1)', 'https://example.com/a.xml', 5],
+        rules: [{ allow: false, path: '/x' }, { allow: 'no', path: '/y' }, null],
+    });
+    assert.deepEqual(data, { found: true, sitemaps: ['https://example.com/a.xml'], rules: [{ allow: false, path: '/x' }] });
+    assert.deepEqual(cleanRobotsData('<html>'), { found: false, sitemaps: [], rules: [] });
+});
+
+test('createRobotsLookup asks one time for each origin and permits all after a failure', async () => {
+    const asked = [];
+    const lookup = createRobotsLookup(async (origin) => {
+        asked.push(origin);
+        if (origin === 'https://down.example') throw new Error('no');
+        return { found: true, sitemaps: [], rules: [{ allow: false, path: '/' }] };
+    });
+    await Promise.all([lookup('https://example.com/a.xml'), lookup('https://example.com/b.xml')]);
+    assert.deepEqual(asked, ['https://example.com']);
+    assert.deepEqual((await lookup('https://down.example/a.xml')).rules, []);
+});
+
+test('crawl skips files that robots.txt denies, and asks one time', async () => {
+    const site = fakeSite({
+        'https://example.com/index.xml': index('https://example.com/ok.xml', 'https://example.com/no1.xml', 'https://example.com/no2.xml'),
+        'https://example.com/ok.xml': urlset('https://example.com/a'),
+    });
+    let questions = 0;
+    const result = await crawl({ url: 'https://example.com/index.xml' }, {
+        ...site,
+        checkRobots: async (url) => !url.includes('/no'),
+        confirmRobots: async () => { questions++; return false; },
+    });
+    assert.equal(questions, 1);
+    assert.equal(result.sitemaps.filter((s) => s.status === 'skipped' && s.error === 'Denied by robots.txt').length, 2);
+    assert.equal(result.urls.length, 1);
+    assert.ok(!site.calls.some((url) => url.includes('/no')));
+});
+
+test('crawl accepts more than one root URL', async () => {
+    const site = fakeSite({
+        'https://example.com/a.xml': urlset('https://example.com/a'),
+        'https://example.com/b.xml': urlset('https://example.com/b'),
+    });
+    const result = await crawl({ urls: ['https://example.com/a.xml', 'https://example.com/b.xml'] }, site);
+    assert.equal(result.urls.length, 2);
+    assert.deepEqual(result.sitemaps.map((s) => s.depth), [0, 0]);
 });

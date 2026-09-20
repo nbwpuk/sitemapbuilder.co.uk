@@ -21,6 +21,26 @@ export function safeHttpUrl(value) {
 }
 
 /**
+ * Make a sitemap address from the text that the user typed, or null if the value is not safe.
+ * A value without a scheme gets https://. A bare domain gets the usual /sitemap.xml path,
+ * and `guessed` is true: the caller can look in robots.txt for a better address.
+ * @returns {{url: string, guessed: boolean} | null}
+ */
+export function sitemapUrlFromInput(value) {
+    if (typeof value !== 'string') return null;
+    let text = value.trim();
+    if (text.startsWith('//')) text = 'https:' + text;
+    else if (!/^[a-z][a-z0-9+.-]*:\/\//i.test(text)) text = 'https://' + text;
+    const href = safeHttpUrl(text);
+    if (href === null) return null;
+    const url = new URL(href);
+    if (!url.hostname.includes('.') && url.hostname !== 'localhost') return null; // "sitemap" is a word, not a host.
+    const guessed = url.pathname === '/' && url.search === '';
+    if (guessed) url.pathname = '/sitemap.xml';
+    return { url: url.href, guessed };
+}
+
+/**
  * Create an element. `props` sets known-safe properties only.
  * Children are nodes or strings. Strings become text nodes.
  */

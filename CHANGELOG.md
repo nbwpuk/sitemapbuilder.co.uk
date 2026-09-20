@@ -2,6 +2,17 @@
 
 The important changes in each release of Sitemap Builder. The newest release is first.
 
+## 1.4.0 - 2026-09-20
+
+### Added
+- You can type an address without `https://`. The tool adds it.
+- You can type only a domain. The tool reads the `Sitemap:` lines in `robots.txt`. If there are none, it uses `/sitemap.xml`.
+- Our server obeys `robots.txt`. If a rule denies a sitemap file, our server does not download it, and the tool asks you before your browser tries a direct download.
+- A page for site owners about the `SitemapBuilder` user agent: https://www.sitemapbuilder.co.uk/bot
+
+### Changed
+- The user agent of our server now has a link to the bot page.
+
 ## 1.3.0 - 2026-09-20
 
 ### Added
