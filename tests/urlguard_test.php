@@ -9,7 +9,7 @@ const SMB = 1;
 require __DIR__ . '/../src/UrlGuard.php';
 require __DIR__ . '/../src/SafeFetcher.php';
 
-$guard = new UrlGuard(['sitemapbuilder.co.uk'], [80, 443], ['203.0.113.9']);
+$guard = new UrlGuard(['sitemapbuilder.co.uk'], [80, 443], ['93.184.216.35']);
 $failures = 0;
 
 function check(string $name, bool $ok): void
@@ -60,7 +60,16 @@ foreach (['127.0.0.53', '10.1.2.3', '172.31.255.255', '192.168.0.1', '169.254.16
 }
 check('url is rebuilt', $guard->parse('HTTPS://Example.COM/a?b=1#frag')['url'] === 'https://example.com:443/a?b=1');
 check('ipv6 url is rebuilt', $guard->parse('http://[2606:4700::1111]/s.xml')['url'] === 'http://[2606:4700::1111]:80/s.xml');
-check('own address refused', refused($guard, 'http://203.0.113.9/'));
+check('own address refused', refused($guard, 'http://93.184.216.35/'));
+check('shared server host accepted', UrlGuard::pick(['93.184.216.35']) === '93.184.216.35');
+check('ipv4 is preferred', UrlGuard::pick(['2606:4700::1111', '1.1.1.1']) === '1.1.1.1');
+$mixed = false;
+try {
+    UrlGuard::pick(['1.1.1.1', '10.0.0.1']);
+} catch (GuardException) {
+    $mixed = true;
+}
+check('host with one private address refused', $mixed);
 
 $xml = '<?xml version="1.0"?><urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"><url><loc>https://e.com/</loc></url></urlset>';
 check('sniff urlset', SafeFetcher::looksLikeSitemap($xml));
