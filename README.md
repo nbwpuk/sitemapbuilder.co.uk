@@ -19,14 +19,15 @@ when the target site blocks direct browser access (CORS).
 
 | Path | Function |
 |---|---|
+| `.env.example` | All settings, with their defaults. Copy it to `.env` (not in git) and change what you need. See [Settings](#settings). |
 | `index.php` | Main page. Reads no user input. |
 | `changelog.php` | Changelog page at `/changelog`. It renders `CHANGELOG.md`. |
 | `bot.php` | Information for site owners at `/bot`. The proxy User-Agent links to it. |
 | `CHANGELOG.md` | The release notes. Add a new `## version - date` section at the top for each release. The top section gives the version number in the footer. |
 | `.htaccess` | Security headers, deny rules, versioned-asset rewrite, cache rules. |
 | `api/fetch.php` | The proxy endpoint. `mode=robots` gives the `robots.txt` data of an origin as JSON. |
-| `src/` | Shared page layout (`layout.php`, which also calculates the asset version), the changelog renderer, and the proxy classes: `UrlGuard`, `SafeFetcher`, `Robots`, `RobotsPolicy`, `RateLimiter`, `config.php`. No web access. |
-| `assets/js/` | ES modules. No build step. |
+| `src/` | Shared page layout (`layout.php`, which also calculates the asset version and the CSP), the settings reader (`env.php`), the analytics settings (`analytics.php`), the changelog renderer, and the proxy classes: `UrlGuard`, `SafeFetcher`, `Robots`, `RobotsPolicy`, `RateLimiter`, `config.php`. No web access. |
+| `assets/js/` | ES modules. No build step. `analytics.js` loads the trackers only when the page carries their settings. |
 | `assets/vendor/` | D3 7.9.0, local copy. `VENDOR.md` records the source and SHA-256. |
 | `var/` | Rate-limit counters and the `robots.txt` cache. No web access. Not in git. |
 | `tests/` | Tests, fixtures, and the development router. No web access. |
@@ -43,10 +44,55 @@ when the target site blocks direct browser access (CORS).
 - The `zlib` extension is necessary for `.xml.gz` files through the proxy. Without it the proxy refuses gzip data.
 - `.htaccess` sends all requests to `https://www.sitemapbuilder.co.uk` with a 301. `/.well-known/` is exempt, thus AutoSSL checks work.
   The HSTS header is sent only on HTTPS requests.
-- If your domain is not `sitemapbuilder.co.uk`, change `own_hosts` in `src/config.php`.
+- Settings: copy `.env.example` to `.env` on the server and set the values that you need. If your domain is not
+  `sitemapbuilder.co.uk`, set `SMB_OWN_HOSTS`. Without a `.env` file, the defaults in `src/config.php` apply and analytics is off.
 
 After deployment, make sure that these URLs return 403 or 404:
-`/.git/HEAD`, `/src/config.php`, `/var/`, `/tests/router.php`, `/README.md`.
+`/.git/HEAD`, `/.env`, `/src/config.php`, `/var/`, `/tests/router.php`, `/README.md`.
+
+Also make sure that the home page sends exactly one `Content-Security-Policy` header. `.htaccess` removes its copy for
+PHP responses, because the pages send their own policy with the analytics origins.
+
+## Settings
+
+`src/env.php` reads `.env` in the repository root. One `KEY=value` for each line, `#` starts a comment, quotes around a
+value are optional. A real environment variable with the same name wins over the file. `.env.example` lists all keys.
+
+| Key | Function |
+|---|---|
+| `SMB_GA_ID` | Google Analytics 4 measurement ID (`G-…`). Turns Google Analytics on. |
+| `SMB_MATOMO_URL`, `SMB_MATOMO_SITE_ID` | The https address of a Matomo installation and the site ID. Both turn Matomo on. |
+| `SMB_ANALYTICS_COOKIES` | `1` permits tracking cookies. Default `0`: Matomo uses `disableCookies`, Google Analytics uses consent mode with `analytics_storage` denied. |
+| `SMB_OWN_HOSTS` | Hosts that the proxy never downloads from. Comma separated. |
+| `SMB_MAX_BYTES`, `SMB_MAX_REDIRECTS`, `SMB_CONNECT_TIMEOUT`, `SMB_TOTAL_TIMEOUT` | Proxy download limits. |
+| `SMB_RATE_WINDOW`, `SMB_RATE_REQUESTS`, `SMB_BYTES_WINDOW`, `SMB_BYTES_LIMIT`, `SMB_GLOBAL_REQUESTS` | Proxy rate limits. |
+
+A value that is not valid (for example a GA ID with the wrong form, or a Matomo address without `https`) turns that
+tracker off. Nothing is written to the page.
+
+## Analytics
+
+Both trackers are off until `.env` turns them on. When a tracker is on, `src/layout.php` puts its settings in data
+attributes on `<html>`, adds its origin to the CSP, loads `assets/js/analytics.js`, and changes the footer text.
+`analytics.js` loads `gtag.js` or `matomo.js` and records a page view. The app records these events with `track()`:
+
+| Event | When | Params |
+|---|---|---|
+| `sitemap_load` | The user starts a run. | `method` (`url`, `paste`, `file`), `label` (the sitemap address, or the method), `host` |
+| `sitemap_done` | The run is complete. | The same, plus `value` (URLs), `sitemaps`, `failed` |
+| `sitemap_cancel` | The user cancelled. | The same as `sitemap_done` |
+| `sitemap_error` | The run failed. | The same as `sitemap_load`, plus `error` (the error code) |
+| `view` | The user selects a view tab. | `label` (`tree`, `treemap`, `sunburst`, `table`, `stats`) |
+| `export` | The user saves a file. | `label` (`svg`, `csv`, `json`), `view` |
+| `sitemap_filter` | The user includes or excludes sitemap files. | `label` (`include`, `exclude`, `include_all`, `exclude_all`) |
+| `confirm` | The user answers a dialog. | `label` (`cross_host`, `robots`), `value` (1 = yes) |
+
+Google Analytics gets the event name and all params. Register the params as custom dimensions in GA4 to see them in
+reports. Matomo gets an event with category `sitemap`, the event name as the action, `label` as the name, and `value` as
+the value. Pasted text and uploaded files send no content and no file name.
+
+A run sends the sitemap address that the user typed. If your privacy notice does not permit that, remove the `label`
+and `host` params in `runParams()` in `assets/js/app.js`.
 
 ## Cache busting
 
@@ -72,15 +118,16 @@ Sitemap content is hostile input. The proxy is a possible tool for abuse. These 
 | Very large crawls | Browser limits: 500 sitemap files, 250,000 URLs, index depth 3, 3 parallel downloads, cycle detection, cancel button. |
 | Crawl of a third-party host through an index | The user must confirm one time before downloads from an unrelated host. |
 | Gzip and XML entity bombs | Byte caps on the download and on the inflated data. A DOCTYPE is refused before the XML parser runs. |
-| XSS through sitemap values | Untrusted text goes to the DOM only as text nodes. Links permit only http(s). Strict CSP: no inline script or style, no third-party origins. |
+| XSS through sitemap values | Untrusted text goes to the DOM only as text nodes. Links permit only http(s). Strict CSP: no inline script or style, no third-party origins (only the validated analytics origins when a tracker is on). |
 | CSV formula injection | Cells that start with `= + - @` get a leading apostrophe. |
 | Drive-by crawl from a link | `?url=` only fills the field. A download starts only after a user action. |
 | Exposure of private files | `.htaccess` denies dotfiles, `src/`, `var/`, `tests/`, `*.md`, and `*.ini`. Each private directory has a second deny file. `src/*.php` exit if called directly. |
 
-The proxy target URL is in the query string, thus it is recorded in the Apache access log. The app has no other logs,
-no cookies, and no analytics.
+The proxy target URL is in the query string, thus it is recorded in the Apache access log. The app has no other logs.
+It sets no cookies and loads no third-party code unless `.env` turns a tracker on (see [Analytics](#analytics)).
 
-The Content-Security-Policy is in `.htaccess`. `tests/router.php` has a copy for development. Keep them the same.
+The base Content-Security-Policy is in three places: `.htaccess` (static files), `csp()` in `src/layout.php` (the HTML
+pages, which add the analytics origins), and `tests/router.php` (static files in development). Keep them the same.
 
 ## Development
 
@@ -97,6 +144,7 @@ php -S 127.0.0.1:8081 tests/fixtures/router.php
 node --test tests/*.test.mjs
 php tests/urlguard_test.php
 php tests/robots_test.php
+php tests/env_test.php
 ```
 
 The proxy refuses `127.0.0.1` by design, thus local fixtures work only through the direct (CORS) path.

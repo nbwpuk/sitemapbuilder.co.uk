@@ -2,6 +2,16 @@
 
 The important changes in each release of Sitemap Builder. The newest release is first.
 
+## 1.5.0 - 2026-09-28
+
+### Added
+- Settings in a `.env` file. `.env.example` lists all keys: the proxy limits, the own hosts, and the analytics keys.
+- Optional Google Analytics 4 and Matomo tracking. Each tracker is off until `.env` sets its keys. Both are cookieless by default.
+- When a tracker is on, the tool records page views and events: the sitemap address that a user loads, the result of the run, the view tabs, the exports, the sitemap filter, and the dialog answers. The footer says which trackers are on.
+
+### Changed
+- The HTML pages now send their own Content-Security-Policy, thus the policy can include the analytics origins when a tracker is on.
+
 ## 1.4.0 - 2026-09-20
 
 ### Added

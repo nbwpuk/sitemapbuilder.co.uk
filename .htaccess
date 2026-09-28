@@ -1,5 +1,5 @@
 # sitemapbuilder.co.uk - the repository root is the web root.
-# Keep the Content-Security-Policy below the same as the copy in tests/router.php.
+# Keep the Content-Security-Policy below the same as the base policy in src/layout.php (csp()) and tests/router.php.
 
 Options -Indexes
 DirectoryIndex index.php
@@ -45,6 +45,11 @@ ServerSignature Off
 
 <IfModule mod_headers.c>
     Header always set Content-Security-Policy "default-src 'none'; script-src 'self'; style-src 'self'; img-src 'self' data:; connect-src 'self' https:; base-uri 'none'; form-action 'none'; frame-ancestors 'none'"
+    # PHP sends its own policy: the pages add the analytics origins from .env, and the proxy sends "sandbox".
+    # Two policies would combine to the strictest one, thus this removes the copy above for PHP responses.
+    <FilesMatch "\.php$">
+        Header always unset Content-Security-Policy
+    </FilesMatch>
     Header always set X-Content-Type-Options "nosniff"
     Header always set X-Frame-Options "DENY"
     Header always set Referrer-Policy "no-referrer"

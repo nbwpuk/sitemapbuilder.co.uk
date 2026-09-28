@@ -3,7 +3,9 @@ declare(strict_types=1);
 
 // Development router. It copies the .htaccess rules for the PHP built-in server.
 // Use: php -S 127.0.0.1:8080 tests/router.php   (run from the repository root)
-// Keep the Content-Security-Policy the same as the copy in .htaccess.
+// Keep the Content-Security-Policy for static files the same as the copy in .htaccess.
+// The PHP pages send their own policy (src/layout.php, csp()), as they do in production.
+// SMB_DEV_CONNECT=http://127.0.0.1:8081 lets the page download local fixtures. csp() reads it.
 
 if (PHP_SAPI !== 'cli-server') {
     http_response_code(404);
@@ -13,9 +15,6 @@ if (PHP_SAPI !== 'cli-server') {
 $root = dirname(__DIR__);
 $path = rawurldecode((string) parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH));
 
-// SMB_DEV_CONNECT=http://127.0.0.1:8081 lets the page download local fixtures. Development only.
-$devConnect = preg_match('#^http://127\.0\.0\.1:\d+$#', (string) getenv('SMB_DEV_CONNECT')) ? ' ' . getenv('SMB_DEV_CONNECT') : '';
-header("Content-Security-Policy: default-src 'none'; script-src 'self'; style-src 'self'; img-src 'self' data:; connect-src 'self' https:$devConnect; base-uri 'none'; form-action 'none'; frame-ancestors 'none'");
 header('X-Content-Type-Options: nosniff');
 header('X-Frame-Options: DENY');
 header('Referrer-Policy: no-referrer');
@@ -68,6 +67,7 @@ $types = [
     'txt' => 'text/plain', 'xml' => 'application/xml', 'html' => 'text/html', 'gz' => 'application/gzip',
 ];
 $ext = strtolower(pathinfo($file, PATHINFO_EXTENSION));
+header("Content-Security-Policy: default-src 'none'; script-src 'self'; style-src 'self'; img-src 'self' data:; connect-src 'self' https:; base-uri 'none'; form-action 'none'; frame-ancestors 'none'");
 header('Content-Type: ' . ($types[$ext] ?? 'application/octet-stream'));
 header('Cache-Control: ' . ($versioned ? 'public, max-age=31536000, immutable' : 'no-cache'));
 readfile($file);

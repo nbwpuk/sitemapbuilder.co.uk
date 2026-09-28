@@ -7,6 +7,7 @@ import { crawl, DEFAULT_LIMITS } from './crawler.js';
 import { buildTree, buildStats, filterUrls } from './model.js';
 import { assignSectionColours, hideTooltip } from './views/common.js';
 import { exportCsv, exportJson, exportSvg } from './export.js';
+import { track } from './analytics.js';
 import * as tree from './views/tree.js';
 import * as treemap from './views/treemap.js';
 import * as sunburst from './views/sunburst.js';
@@ -59,6 +60,7 @@ setupTabs(document.querySelector('[aria-label="Input method"]'), (tab) => {
 setupTabs(document.querySelector('[aria-label="View"]'), (tab) => {
     activeView = tab.dataset.view;
     ui.view.setAttribute('aria-labelledby', tab.id);
+    track('view', { label: activeView });
     renderView();
 });
 
@@ -114,22 +116,39 @@ function confirmDialog(title, text, yes, no) {
 function confirmCrossHost(host) {
     return confirmDialog('Sitemap on a different host',
         `The sitemap index points to files on "${host}", which is a different host. Do you want to download these files?`,
-        'Download them', 'Skip these files');
+        'Download them', 'Skip these files')
+        .then((yes) => (track('confirm', { label: 'cross_host', value: yes ? 1 : 0 }), yes));
 }
 
 /** Ask the user one time about files that robots.txt denies. Our server does not download them. */
 function confirmRobots(host) {
     return confirmDialog('Denied by robots.txt',
         `The robots.txt file of "${host}" does not permit the download of one or more sitemap files. Our server will not download them. Do you want your browser to try a direct download?`,
-        'Try a direct download', 'Skip these files');
+        'Try a direct download', 'Skip these files')
+        .then((yes) => (track('confirm', { label: 'robots', value: yes ? 1 : 0 }), yes));
 }
 
 /* ---------- Crawl ---------- */
 
-async function run(rootSpec) {
+/** The analytics params for one run: the sitemap address for a URL; only the method for pasted text and files. */
+function runParams(rootSpec, method) {
+    if (method !== 'url' || !rootSpec.url) return { method, label: method, host: '' };
+    let host = '';
+    try {
+        host = new URL(rootSpec.url).hostname;
+    } catch {
+        // No host: the label still tells which address was used.
+    }
+    return { method, label: rootSpec.url.slice(0, 200), host };
+}
+
+/** `method` is 'url', 'paste', or 'file'. It goes to analytics only. */
+async function run(rootSpec, method) {
     controller?.abort();
     controller = new AbortController();
     const mine = controller;
+    const params = runParams(rootSpec, method);
+    track('sitemap_load', params);
 
     hideTooltip();
     state = null;
@@ -173,10 +192,12 @@ async function run(rootSpec) {
         ui.cancel.hidden = true;
         if (error?.name === 'AbortError') {
             ui.summary.textContent = 'You cancelled the download.';
+            track('sitemap_cancel', params);
             return;
         }
         ui.summary.textContent = 'We cannot read this sitemap.';
         message(error?.message || 'Unknown error', true);
+        track('sitemap_error', { ...params, error: error?.code || error?.name || 'error' });
         return;
     }
     if (mine !== controller) return; // A newer run replaced this one.
@@ -187,6 +208,9 @@ async function run(rootSpec) {
     for (const note of result.notes) message(NOTE_TEXT[note] ?? note);
     if (result.aborted) message('You cancelled the download. The views show the URLs that we found before that.');
     const failed = result.sitemaps.filter((s) => s.status === 'error');
+    track(result.aborted ? 'sitemap_cancel' : 'sitemap_done', {
+        ...params, value: result.urls.length, sitemaps: result.sitemaps.length, failed: failed.length,
+    });
     if (failed.length > 0) message(`${formatNumber(failed.length)} sitemap ${failed.length === 1 ? 'file' : 'files'} failed. See the list for the cause.`, true);
     if (result.invalid > 0) message(`We ignored ${formatNumber(result.invalid)} entries that are not valid http(s) URLs.`);
 
@@ -233,6 +257,7 @@ function renderFilter() {
     const setAll = (checked) => {
         for (const box of boxes) box.checked = checked;
         state.excluded = new Set(checked ? [] : files.map((s) => s.id));
+        track('sitemap_filter', { label: checked ? 'include_all' : 'exclude_all' });
         summary();
         applyFilter();
     };
@@ -242,6 +267,7 @@ function renderFilter() {
         box.addEventListener('change', () => {
             if (box.checked) state.excluded.delete(s.id);
             else state.excluded.add(s.id);
+            track('sitemap_filter', { label: box.checked ? 'include' : 'exclude' });
             summary();
             applyFilter();
         });
@@ -295,13 +321,13 @@ $('in-url').addEventListener('submit', (event) => {
         return;
     }
     if (!input.guessed) ui.urlField.value = input.url; // Show the address that we download.
-    run(input);
+    run(input, 'url');
 });
 ui.urlField.addEventListener('input', () => ui.urlField.setCustomValidity(''));
 
 $('in-paste').addEventListener('submit', (event) => {
     event.preventDefault();
-    run({ text: ui.pasteField.value, label: 'Pasted XML' });
+    run({ text: ui.pasteField.value, label: 'Pasted XML' }, 'paste');
 });
 
 $('in-file').addEventListener('submit', async (event) => {
@@ -316,7 +342,7 @@ $('in-file').addEventListener('submit', async (event) => {
     }
     try {
         const text = await bytesToText(new Uint8Array(await file.arrayBuffer()));
-        run({ text, label: file.name });
+        run({ text, label: file.name }, 'file');
     } catch (error) {
         message(error?.message || 'We cannot read this file.', true);
     }
@@ -326,9 +352,21 @@ ui.cancel.addEventListener('click', () => controller?.abort());
 
 /* ---------- Exports ---------- */
 
-ui.exportSvg.addEventListener('click', () => state && rendered?.svg && exportSvg(state, rendered.svg, rendered.name, rendered.scene));
-$('export-csv').addEventListener('click', () => state && exportCsv(state, activeView === 'table' ? table.currentRows(state) : state.urls));
-$('export-json').addEventListener('click', () => state && exportJson(state));
+ui.exportSvg.addEventListener('click', () => {
+    if (!state || !rendered?.svg) return;
+    track('export', { label: 'svg', view: activeView });
+    exportSvg(state, rendered.svg, rendered.name, rendered.scene);
+});
+$('export-csv').addEventListener('click', () => {
+    if (!state) return;
+    track('export', { label: 'csv', view: activeView });
+    exportCsv(state, activeView === 'table' ? table.currentRows(state) : state.urls);
+});
+$('export-json').addEventListener('click', () => {
+    if (!state) return;
+    track('export', { label: 'json', view: activeView });
+    exportJson(state);
+});
 
 /* ---------- Page ---------- */
 
