@@ -50,8 +50,11 @@ when the target site blocks direct browser access (CORS).
 After deployment, make sure that these URLs return 403 or 404:
 `/.git/HEAD`, `/.env`, `/src/config.php`, `/var/`, `/tests/router.php`, `/README.md`.
 
-Also make sure that the home page sends exactly one `Content-Security-Policy` header. `.htaccess` removes its copy for
-PHP responses, because the pages send their own policy with the analytics origins.
+Also make sure that the home page sends exactly one `Content-Security-Policy` header, which starts with `default-src 'none'`.
+The pages send their own policy with the analytics origins. `.htaccess` adds the base policy only when a response has
+none (`Header always setifempty`), thus static files get it and PHP responses keep theirs. A parent `.htaccess` (for
+example `~/.htaccess` on cPanel) must not set `Content-Security-Policy` with `Header set`, or the browser sees two
+policies and applies the strictest one.
 
 ## Settings
 

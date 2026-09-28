@@ -44,12 +44,10 @@ ServerSignature Off
 </FilesMatch>
 
 <IfModule mod_headers.c>
-    Header always set Content-Security-Policy "default-src 'none'; script-src 'self'; style-src 'self'; img-src 'self' data:; connect-src 'self' https:; base-uri 'none'; form-action 'none'; frame-ancestors 'none'"
     # PHP sends its own policy: the pages add the analytics origins from .env, and the proxy sends "sandbox".
-    # Two policies would combine to the strictest one, thus this removes the copy above for PHP responses.
-    <FilesMatch "\.php$">
-        Header always unset Content-Security-Policy
-    </FilesMatch>
+    # A CGI-type handler (lsphp, php-cgi, php-fpm) puts the PHP headers in the "always" table, thus
+    # "setifempty" keeps the PHP policy and adds this one only for static files. "set" would replace the PHP policy.
+    Header always setifempty Content-Security-Policy "default-src 'none'; script-src 'self'; style-src 'self'; img-src 'self' data:; connect-src 'self' https:; base-uri 'none'; form-action 'none'; frame-ancestors 'none'"
     Header always set X-Content-Type-Options "nosniff"
     Header always set X-Frame-Options "DENY"
     Header always set Referrer-Policy "no-referrer"
