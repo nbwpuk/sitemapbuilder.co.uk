@@ -3,6 +3,8 @@ declare(strict_types=1);
 
 defined('SMB') || exit;
 
+require_once __DIR__ . '/analytics.php';
+
 // Shared page parts. These functions read no user input.
 
 /**
@@ -41,15 +43,40 @@ function e(string $text): string
     return htmlspecialchars($text, ENT_QUOTES | ENT_SUBSTITUTE | ENT_HTML5, 'UTF-8');
 }
 
+/**
+ * The Content-Security-Policy of the HTML pages.
+ * The base policy is the same as the copy in .htaccess, which covers the static files.
+ * The analytics origins are added only when .env turns a tracker on.
+ * SMB_DEV_CONNECT=http://127.0.0.1:<port> permits local fixtures. It works only with the PHP development server.
+ */
+function csp(): string
+{
+    $extra = analytics_csp_sources();
+    $script = array_merge(["'self'"], $extra['script-src']);
+    $img = array_merge(["'self'", 'data:'], $extra['img-src']);
+    $connect = ["'self'", 'https:'];
+    $dev = (string) getenv('SMB_DEV_CONNECT');
+    if (PHP_SAPI === 'cli-server' && preg_match('#^http://127\.0\.0\.1:\d+$#', $dev) === 1) {
+        $connect[] = $dev;
+    }
+    return "default-src 'none'"
+        . '; script-src ' . implode(' ', $script)
+        . "; style-src 'self'"
+        . '; img-src ' . implode(' ', $img)
+        . '; connect-src ' . implode(' ', $connect)
+        . "; base-uri 'none'; form-action 'none'; frame-ancestors 'none'";
+}
+
 /** Send headers and print the document head and the site header. `$app` adds the D3 and app scripts. */
 function page_start(string $title, string $description, bool $app): void
 {
     $a = asset_prefix();
     header('Content-Type: text/html; charset=utf-8');
     header('Cache-Control: no-cache');
+    header('Content-Security-Policy: ' . csp());
     ?>
 <!DOCTYPE html>
-<html lang="en-GB">
+<html lang="en-GB"<?= analytics_attributes() ?>>
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -58,6 +85,9 @@ function page_start(string $title, string $description, bool $app): void
 <meta name="color-scheme" content="light dark">
 <link rel="icon" href="/favicon.svg" type="image/svg+xml">
 <link rel="stylesheet" href="<?= $a ?>/css/app.css">
+<?php if (analytics_on()): ?>
+<script type="module" src="<?= $a ?>/js/analytics.js"></script>
+<?php endif; ?>
 <?php if ($app): ?>
 <script src="<?= $a ?>/vendor/d3.v7.min.js" defer></script>
 <script type="module" src="<?= $a ?>/js/app.js"></script>
@@ -74,9 +104,15 @@ function page_start(string $title, string $description, bool $app): void
 function page_end(bool $app): void
 {
     $version = app_version();
+    $trackers = analytics_names();
+    $cookies = analytics_config()['cookies'];
     ?>
 <footer class="site-footer">
+<?php if ($trackers === []): ?>
   <p>Sitemap Builder uses no cookies and no analytics. Our downloader identifies itself as <code>SitemapBuilder/1.0</code> and obeys <code>robots.txt</code>. <a href="/bot">About the bot</a>.</p>
+<?php else: ?>
+  <p>Sitemap Builder uses <?= e(implode(' and ', $trackers)) ?> to measure the use of this tool<?= $cookies ? '' : ', without cookies' ?>. It records the sitemap address that you load and the features that you use. Our downloader identifies itself as <code>SitemapBuilder/1.0</code> and obeys <code>robots.txt</code>. <a href="/bot">About the bot</a>.</p>
+<?php endif; ?>
   <p>Built and hosted by <a href="https://encode.host" target="_blank" rel="noopener">EncodeDotHost</a>. <?php if ($version !== ''): ?>Version <a href="/changelog#v<?= e($version) ?>"><?= e($version) ?></a>.<?php else: ?><a href="/changelog">Changelog</a>.<?php endif; ?> <a href="https://github.com/nbwpuk/sitemapbuilder.co.uk" target="_blank" rel="noopener">Source code on GitHub</a>.</p>
 <?php if ($app): ?>
   <noscript><p>This tool needs JavaScript.</p></noscript>

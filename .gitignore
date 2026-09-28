@@ -1,3 +1,6 @@
 # Runtime data
 /var/*
 !/var/.htaccess
+
+# Local settings (see .env.example)
+/.env
