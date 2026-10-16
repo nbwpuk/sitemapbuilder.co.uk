@@ -19,6 +19,7 @@ function help_svg(string $name): void
 page_start(
     'Help - Sitemap Builder',
     'How to use Sitemap Builder: what it shows about your site, how to load a sitemap, and what each view and export contains.',
+    '/help',
     false,
     'help'
 );

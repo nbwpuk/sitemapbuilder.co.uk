@@ -9,6 +9,7 @@ require __DIR__ . '/src/layout.php';
 page_start(
     'Sitemap Builder - see your XML sitemap as a tree, treemap, sunburst, and table',
     'Enter an XML sitemap URL. Sitemap Builder follows sitemap index files and shows all URLs as a tree, treemap, sunburst, table, and statistics. All processing occurs in your browser.',
+    '/',
     true
 );
 ?>

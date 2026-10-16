@@ -131,5 +131,16 @@ check('csp base policy is present', str_starts_with(csp(), "default-src 'none'; 
 check('csp has no inline sources', !str_contains(csp(), 'unsafe'));
 check('html attributes are empty without a tracker', analytics_on() || analytics_attributes() === '');
 
+/* ---- site_url_from ---- */
+
+$defaultSite = 'https://www.sitemapbuilder.co.uk';
+check('site url: unset gives the default', site_url_from(null) === $defaultSite);
+check('site url: a valid origin is kept', site_url_from('https://example.org') === 'https://example.org');
+check('site url: a trailing slash is removed', site_url_from('https://example.org/') === 'https://example.org');
+check('site url: http is refused', site_url_from('http://example.org') === $defaultSite);
+check('site url: a path is refused', site_url_from('https://example.org/tool') === $defaultSite);
+check('site url: a port is refused', site_url_from('https://example.org:8443') === $defaultSite);
+check('site url: markup is refused', site_url_from('https://example.org"><script>') === $defaultSite);
+
 echo $failures === 0 ? "All checks passed\n" : "$failures check(s) failed\n";
 exit($failures === 0 ? 0 : 1);
