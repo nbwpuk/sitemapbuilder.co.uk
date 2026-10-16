@@ -112,8 +112,8 @@ code { font-family: var(--mono); font-size: 0.92em; }
 .panel-head { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px 16px; margin-bottom: 12px; }
 .hint { margin: 12px 0 0; color: var(--text-secondary); font-size: 13px; }
 
-/* Text pages */
-.prose { max-width: 760px; }
+/* Text pages. The panel is as wide as the header; text keeps a readable measure, figures can use the width. */
+.prose p, .prose ul, .prose ol, .prose dl, .prose pre, .prose figcaption { max-width: 860px; }
 .prose h2 { margin: 28px 0 4px; padding-top: 16px; border-top: 1px solid var(--grid); }
 .prose h1 + h2, .prose h1 + p + h2 { border-top: 0; padding-top: 0; }
 .prose .current-version { margin-left: 8px; padding: 2px 8px; border: 1px solid var(--border); border-radius: 999px; font-size: 12px; font-weight: 600; color: var(--text-secondary); vertical-align: middle; white-space: nowrap; }
@@ -128,9 +128,7 @@ code { font-family: var(--mono); font-size: 0.92em; }
 .prose dt { font-weight: 600; margin-top: 8px; }
 .prose dd { margin: 2px 0 0 0; color: var(--text-secondary); }
 
-/* Help page. The panel is as wide as the header; text keeps a readable measure, figures can use the width. */
-.help { max-width: none; }
-.help p, .help ul, .help dl, .help figcaption { max-width: 860px; }
+/* Help page */
 .help .tabs { margin: 16px 0 0; padding-bottom: 8px; border-bottom: 1px solid var(--grid); }
 .help .tabs.sub { margin-top: 12px; }
 .help [role="tabpanel"] > h2 { margin-top: 20px; padding-top: 0; border-top: 0; }
@@ -138,6 +136,7 @@ code { font-family: var(--mono); font-size: 0.92em; }
 /* The figures: static SVG drawings that use the same classes as the views, thus they follow the theme. */
 .figure { margin: 12px 0 16px; padding: 12px; border: 1px solid var(--grid); border-radius: 6px; background: var(--surface-1); }
 .figure figcaption { margin-top: 8px; color: var(--text-secondary); font-size: 13px; }
+.figure pre { max-width: none; }
 .figure svg { display: block; width: 100%; height: auto; font: 12px var(--font); }
 .figure .sunburst { max-width: 420px; margin: 0 auto; }
 /* On a narrow screen a wide figure scrolls in its box, thus the text stays readable. */
