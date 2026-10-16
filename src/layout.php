@@ -38,6 +38,24 @@ function app_version(): string
     return preg_match('/^## (\d+\.\d+\.\d+)\b/m', $markdown, $m) === 1 ? $m[1] : '';
 }
 
+/**
+ * The public address of the site, for the canonical links: `SMB_SITE_URL` in .env, or the default.
+ * The value must be an https origin without a path. A value that is not valid gives the default.
+ * The request host is not used: a client can set it to any value.
+ */
+function site_url_from(?string $value): string
+{
+    $default = 'https://www.sitemapbuilder.co.uk';
+    if ($value === null) return $default;
+    $value = rtrim(trim($value), '/');
+    return preg_match('#^https://[a-z0-9-]+(\.[a-z0-9-]+)*$#i', $value) === 1 ? $value : $default;
+}
+
+function site_url(): string
+{
+    return site_url_from(env('SMB_SITE_URL'));
+}
+
 function e(string $text): string
 {
     return htmlspecialchars($text, ENT_QUOTES | ENT_SUBSTITUTE | ENT_HTML5, 'UTF-8');
@@ -69,9 +87,10 @@ function csp(): string
 
 /**
  * Send headers and print the document head and the site header.
+ * `$path` is the path of the page for the canonical link, for example '/help'.
  * `$app` adds the D3 and app scripts. `$module` adds one other module from assets/js/, for example 'help'.
  */
-function page_start(string $title, string $description, bool $app, string $module = ''): void
+function page_start(string $title, string $description, string $path, bool $app, string $module = ''): void
 {
     $a = asset_prefix();
     header('Content-Type: text/html; charset=utf-8');
@@ -85,6 +104,7 @@ function page_start(string $title, string $description, bool $app, string $modul
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title><?= e($title) ?></title>
 <meta name="description" content="<?= e($description) ?>">
+<link rel="canonical" href="<?= e(site_url() . $path) ?>">
 <meta name="color-scheme" content="light dark">
 <link rel="icon" href="/favicon.svg" type="image/svg+xml">
 <link rel="stylesheet" href="<?= $a ?>/css/app.css">

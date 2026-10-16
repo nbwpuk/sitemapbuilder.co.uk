@@ -12,6 +12,7 @@ $markdown = (string) @file_get_contents(__DIR__ . '/CHANGELOG.md');
 page_start(
     'Changelog - Sitemap Builder',
     'The changes in each release of Sitemap Builder.',
+    '/changelog',
     false
 );
 ?>

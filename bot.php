@@ -9,6 +9,7 @@ require __DIR__ . '/src/layout.php';
 page_start(
     'The SitemapBuilder bot - Sitemap Builder',
     'What the SitemapBuilder user agent does, and how to control it with robots.txt.',
+    '/bot',
     false
 );
 ?>

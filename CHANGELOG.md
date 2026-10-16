@@ -8,6 +8,7 @@ The important changes in each release of Sitemap Builder. The newest release is 
 - A help page: https://www.sitemapbuilder.co.uk/help. It tells you what the tool does for you, how to load a sitemap, and what each view, tile, chart, and export shows. Example figures show each view.
 - Links to the help page in the site header, in the footer, and below the sitemap form.
 - The help page has tabs for its sections, and a second row of tabs for the views, the same as the tool. A link such as `/help#treemap` opens one section.
+- Each page has a canonical link. `SMB_SITE_URL` in `.env` sets the site address; the default is `https://www.sitemapbuilder.co.uk`.
 
 ## 1.5.0 - 2026-09-28
 

@@ -46,7 +46,7 @@ when the target site blocks direct browser access (CORS).
 - `.htaccess` sends all requests to `https://www.sitemapbuilder.co.uk` with a 301. `/.well-known/` is exempt, thus AutoSSL checks work.
   The HSTS header is sent only on HTTPS requests.
 - Settings: copy `.env.example` to `.env` on the server and set the values that you need. If your domain is not
-  `sitemapbuilder.co.uk`, set `SMB_OWN_HOSTS`. Without a `.env` file, the defaults in `src/config.php` apply and analytics is off.
+  `sitemapbuilder.co.uk`, set `SMB_OWN_HOSTS` and `SMB_SITE_URL`. Without a `.env` file, the defaults in `src/config.php` apply and analytics is off.
 
 After deployment, make sure that these URLs return 403 or 404:
 `/.git/HEAD`, `/.env`, `/src/config.php`, `/var/`, `/tests/router.php`, `/README.md`.
@@ -64,6 +64,7 @@ value are optional. A real environment variable with the same name wins over the
 
 | Key | Function |
 |---|---|
+| `SMB_SITE_URL` | The public address of the site, for the canonical link of each page. Default `https://www.sitemapbuilder.co.uk`. |
 | `SMB_GA_ID` | Google Analytics 4 measurement ID (`G-…`). Turns Google Analytics on. |
 | `SMB_MATOMO_URL`, `SMB_MATOMO_SITE_ID` | The https address of a Matomo installation and the site ID. Both turn Matomo on. |
 | `SMB_ANALYTICS_COOKIES` | `1` permits tracking cookies. Default `0`: Matomo uses `disableCookies`, Google Analytics uses consent mode with `analytics_storage` denied. |
