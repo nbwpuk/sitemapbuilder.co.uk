@@ -8,6 +8,7 @@ import { buildTree, buildStats, filterUrls } from './model.js';
 import { assignSectionColours, hideTooltip } from './views/common.js';
 import { exportCsv, exportJson, exportSvg } from './export.js';
 import { track } from './analytics.js';
+import { setupTabs } from './tabs.js';
 import * as tree from './views/tree.js';
 import * as treemap from './views/treemap.js';
 import * as sunburst from './views/sunburst.js';
@@ -33,25 +34,6 @@ let rendered = null;
 const lookupRobots = createRobotsLookup(fetchRobotsData);
 
 /* ---------- Tabs ---------- */
-
-function setupTabs(tablist, onSelect) {
-    const tabs = [...tablist.querySelectorAll('[role="tab"]')];
-    const select = (tab, focus = false) => {
-        for (const t of tabs) {
-            t.setAttribute('aria-selected', String(t === tab));
-            t.tabIndex = t === tab ? 0 : -1;
-        }
-        if (focus) tab.focus();
-        onSelect(tab);
-    };
-    for (const tab of tabs) tab.addEventListener('click', () => select(tab));
-    tablist.addEventListener('keydown', (event) => {
-        const i = tabs.indexOf(document.activeElement);
-        if (i === -1) return;
-        if (event.key === 'ArrowRight') select(tabs[(i + 1) % tabs.length], true);
-        else if (event.key === 'ArrowLeft') select(tabs[(i - 1 + tabs.length) % tabs.length], true);
-    });
-}
 
 setupTabs(document.querySelector('[aria-label="Input method"]'), (tab) => {
     for (const id of ['in-url', 'in-paste', 'in-file']) $(id).hidden = id !== tab.getAttribute('aria-controls');
