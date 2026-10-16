@@ -2,6 +2,12 @@
 
 The important changes in each release of Sitemap Builder. The newest release is first.
 
+## 1.6.0 - 2026-10-16
+
+### Added
+- A help page: https://www.sitemapbuilder.co.uk/help. It tells you what the tool does for you, how to load a sitemap, and what each view, tile, chart, and export shows. Example figures show each view.
+- Links to the help page in the site header, in the footer, and below the sitemap form.
+
 ## 1.5.0 - 2026-09-28
 
 ### Added

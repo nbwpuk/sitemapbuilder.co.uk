@@ -1,0 +1,49 @@
+<svg viewBox="0 0 720 360" role="img" aria-label="Example treemap of www.example.com">
+<g transform="translate(2,2)"><rect class="group-bg" rx="3" width="365" height="356"/><text class="group-label" x="5" y="14">blog  120</text></g>
+<g transform="translate(369,2)"><rect class="group-bg" rx="3" width="253" height="340"/><text class="group-label" x="5" y="14">products  80</text></g>
+<g transform="translate(624,2)"><rect class="group-bg" rx="3" width="94" height="340"/><text class="group-label" x="5" y="14">help  30</text></g>
+<g transform="translate(369,344)"><rect class="group-bg" rx="3" width="279" height="14"/></g>
+<g class="cell s1" transform="translate(4,22)"><rect rx="2" width="276" height="173"/><text x="4" y="12">2024</text><text x="4" y="26" opacity="0.8">48</text></g>
+<g class="cell s1" transform="translate(4,197)"><rect rx="2" width="276" height="159"/><text x="4" y="12">2025</text><text x="4" y="26" opacity="0.8">44</text></g>
+<g class="cell s1" transform="translate(282,22)"><rect rx="2" width="83" height="322"/><text x="4" y="12">2026</text><text x="4" y="26" opacity="0.8">27</text></g>
+<g class="cell s1" transform="translate(282,346)"><rect rx="2" width="83" height="10"/></g>
+<g class="cell s2" transform="translate(371,22)"><rect rx="2" width="152" height="266"/><text x="4" y="12">shoes</text><text x="4" y="26" opacity="0.8">41</text></g>
+<g class="cell s2" transform="translate(525,22)"><rect rx="2" width="95" height="266"/><text x="4" y="12">bags</text><text x="4" y="26" opacity="0.8">26</text></g>
+<g class="cell s2" transform="translate(371,290)"><rect rx="2" width="230" height="50"/><text x="4" y="12">hats</text><text x="4" y="26" opacity="0.8">12</text></g>
+<g class="cell s2" transform="translate(603,290)"><rect rx="2" width="17" height="50"/></g>
+<g class="cell s3" transform="translate(626,22)"><rect rx="2" width="21" height="41"/></g>
+<g class="cell s3" transform="translate(649,22)"><rect rx="2" width="21" height="41"/></g>
+<g class="cell s3" transform="translate(672,22)"><rect rx="2" width="21" height="41"/></g>
+<g class="cell s3" transform="translate(695,22)"><rect rx="2" width="21" height="41"/></g>
+<g class="cell s3" transform="translate(626,65)"><rect rx="2" width="21" height="40"/></g>
+<g class="cell s3" transform="translate(649,65)"><rect rx="2" width="21" height="40"/></g>
+<g class="cell s3" transform="translate(672,65)"><rect rx="2" width="21" height="40"/></g>
+<g class="cell s3" transform="translate(695,65)"><rect rx="2" width="21" height="40"/></g>
+<g class="cell s3" transform="translate(626,107)"><rect rx="2" width="21" height="41"/></g>
+<g class="cell s3" transform="translate(649,107)"><rect rx="2" width="21" height="41"/></g>
+<g class="cell s3" transform="translate(672,107)"><rect rx="2" width="21" height="41"/></g>
+<g class="cell s3" transform="translate(695,107)"><rect rx="2" width="21" height="41"/></g>
+<g class="cell s3" transform="translate(626,150)"><rect rx="2" width="21" height="41"/></g>
+<g class="cell s3" transform="translate(649,150)"><rect rx="2" width="21" height="41"/></g>
+<g class="cell s3" transform="translate(672,150)"><rect rx="2" width="21" height="41"/></g>
+<g class="cell s3" transform="translate(695,150)"><rect rx="2" width="21" height="41"/></g>
+<g class="cell s3" transform="translate(626,193)"><rect rx="2" width="21" height="41"/></g>
+<g class="cell s3" transform="translate(649,193)"><rect rx="2" width="21" height="41"/></g>
+<g class="cell s3" transform="translate(672,193)"><rect rx="2" width="21" height="41"/></g>
+<g class="cell s3" transform="translate(695,193)"><rect rx="2" width="21" height="41"/></g>
+<g class="cell s3" transform="translate(626,236)"><rect rx="2" width="21" height="40"/></g>
+<g class="cell s3" transform="translate(649,236)"><rect rx="2" width="21" height="40"/></g>
+<g class="cell s3" transform="translate(672,236)"><rect rx="2" width="21" height="40"/></g>
+<g class="cell s3" transform="translate(695,236)"><rect rx="2" width="21" height="40"/></g>
+<g class="cell s3" transform="translate(626,278)"><rect rx="2" width="44" height="20"/><text x="4" y="12">arti…</text></g>
+<g class="cell s3" transform="translate(626,300)"><rect rx="2" width="44" height="19"/><text x="4" y="12">arti…</text></g>
+<g class="cell s3" transform="translate(626,321)"><rect rx="2" width="44" height="19"/><text x="4" y="12">arti…</text></g>
+<g class="cell s3" transform="translate(672,278)"><rect rx="2" width="21" height="41"/></g>
+<g class="cell s3" transform="translate(695,278)"><rect rx="2" width="21" height="41"/></g>
+<g class="cell s3" transform="translate(672,321)"><rect rx="2" width="44" height="19"/><text x="4" y="12">(thi…</text></g>
+<g class="cell s4" transform="translate(371,346)"><rect rx="2" width="67" height="10"/></g>
+<g class="cell s4" transform="translate(440,346)"><rect rx="2" width="67" height="10"/></g>
+<g class="cell s4" transform="translate(509,346)"><rect rx="2" width="67" height="10"/></g>
+<g class="cell s4" transform="translate(578,346)"><rect rx="2" width="68" height="10"/></g>
+<g class="cell s-other" transform="translate(650,344)"><rect rx="2" width="68" height="14"/></g>
+</svg>

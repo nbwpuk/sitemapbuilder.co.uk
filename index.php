@@ -39,7 +39,7 @@ page_start(
       <button type="submit" class="primary">Build</button>
     </form>
 
-    <p class="hint">Your browser downloads and reads the sitemap. If a site blocks direct browser access, our server gets the file for you. We do not store sitemap data.</p>
+    <p class="hint">Your browser downloads and reads the sitemap. If a site blocks direct browser access, our server gets the file for you. We do not store sitemap data. <a href="/help">How to use this tool</a>.</p>
   </section>
 
   <section id="progress" class="panel" aria-labelledby="progress-title" hidden>

@@ -97,6 +97,7 @@ function page_start(string $title, string $description, bool $app): void
 <header class="site-header">
   <a class="brand" href="/"><img src="/favicon.svg" alt="" width="28" height="28"> Sitemap Builder</a>
   <p class="tagline">Turn an XML sitemap into a picture of your site.</p>
+  <nav class="site-nav" aria-label="Site"><a href="/help">Help</a></nav>
 </header>
 <?php
 }
@@ -113,7 +114,7 @@ function page_end(bool $app): void
 <?php else: ?>
   <p>Sitemap Builder uses <?= e(implode(' and ', $trackers)) ?> to measure the use of this tool<?= $cookies ? '' : ', without cookies' ?>. It records the sitemap address that you load and the features that you use. Our downloader identifies itself as <code>SitemapBuilder/1.0</code> and obeys <code>robots.txt</code>. <a href="/bot">About the bot</a>.</p>
 <?php endif; ?>
-  <p>Built and hosted by <a href="https://encode.host" target="_blank" rel="noopener">EncodeDotHost</a>. <?php if ($version !== ''): ?>Version <a href="/changelog#v<?= e($version) ?>"><?= e($version) ?></a>.<?php else: ?><a href="/changelog">Changelog</a>.<?php endif; ?> <a href="https://github.com/nbwpuk/sitemapbuilder.co.uk" target="_blank" rel="noopener">Source code on GitHub</a>.</p>
+  <p>Built and hosted by <a href="https://encode.host" target="_blank" rel="noopener">EncodeDotHost</a>. <a href="/help">Help</a>. <?php if ($version !== ''): ?>Version <a href="/changelog#v<?= e($version) ?>"><?= e($version) ?></a>.<?php else: ?><a href="/changelog">Changelog</a>.<?php endif; ?> <a href="https://github.com/nbwpuk/sitemapbuilder.co.uk" target="_blank" rel="noopener">Source code on GitHub</a>.</p>
 <?php if ($app): ?>
   <noscript><p>This tool needs JavaScript.</p></noscript>
 <?php endif; ?>

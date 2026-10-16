@@ -50,6 +50,10 @@ if ($path === '/bot' || $path === '/bot/' || $path === '/bot.php') {
     require $root . '/bot.php';
     return true;
 }
+if ($path === '/help' || $path === '/help/' || $path === '/help.php') {
+    require $root . '/help.php';
+    return true;
+}
 if ($path === '/api/fetch.php') {
     require $root . '/api/fetch.php';
     return true;

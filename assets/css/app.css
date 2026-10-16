@@ -96,8 +96,11 @@ code { font-family: var(--mono); font-size: 0.92em; }
 }
 .brand img { border-radius: 6px; }
 .tagline { margin: 0; color: var(--text-secondary); }
+.site-nav { display: flex; gap: 16px; font-weight: 600; }
+.site-nav a { text-decoration: none; }
+.site-nav a:hover { text-decoration: underline; }
 @media (min-width: 720px) { .tagline { margin-left: auto; } }
-@media (max-width: 719.98px) { .tagline { flex-basis: 100%; } }
+@media (max-width: 719.98px) { .tagline { flex-basis: 100%; order: 1; } .site-nav { margin-left: auto; } }
 .site-header, .site-footer { width: 100%; }
 .site-footer { max-width: 1280px; margin: 0 auto; padding: 12px 16px 16px; color: var(--text-muted); font-size: 13px; border-top: 1px solid var(--grid); }
 .site-footer p { margin: 4px 0; }
@@ -120,6 +123,34 @@ code { font-family: var(--mono); font-size: 0.92em; }
 .prose p { margin: 8px 0; }
 .prose .back { margin-top: 28px; }
 .prose pre { margin: 8px 0; padding: 10px 12px; border: 1px solid var(--grid); border-radius: 6px; overflow-x: auto; font-family: var(--mono); font-size: 13px; }
+.prose ol { margin: 4px 0; padding-left: 22px; }
+.prose dl { margin: 8px 0; }
+.prose dt { font-weight: 600; margin-top: 8px; }
+.prose dd { margin: 2px 0 0 0; color: var(--text-secondary); }
+
+/* Help page figures. The SVGs use the same classes as the views, thus they follow the theme. */
+.help { max-width: 860px; }
+.toc { margin: 12px 0; padding: 10px 16px; background: var(--surface-2); border-radius: 6px; }
+.toc ol { margin: 0; }
+.figure { margin: 12px 0 16px; padding: 12px; border: 1px solid var(--grid); border-radius: 6px; background: var(--surface-1); }
+.figure figcaption { margin-top: 8px; color: var(--text-secondary); font-size: 13px; }
+.figure svg { display: block; width: 100%; height: auto; font: 12px var(--font); }
+.figure .sunburst { max-width: 420px; margin: 0 auto; }
+/* On a narrow screen a wide figure scrolls in its box, thus the text stays readable. */
+.figure .wide { overflow-x: auto; }
+.figure .wide svg { min-width: 600px; }
+.figure .cell rect, .figure .arc path, .figure .group-bg, .figure .tree-node { cursor: default; }
+.figure .tiles { margin-bottom: 0; }
+.figure .tile .value { font-size: 22px; }
+.figure .charts { grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); }
+.figure .vt-static .vt-row { position: static; }
+.figure .vt-static .vt-head > div { padding: 6px 10px; }
+.figure .vt-static .vt-inner { min-width: 760px; }
+.figure .vt-static .vt-row, .figure .vt-static .vt-head { grid-template-columns: minmax(0, 1fr) 130px 90px 70px 56px 140px; }
+.figure .legend { margin-top: 8px; }
+.figure .toolbar-sample { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 8px; font-size: 13px; }
+.figure .toolbar-sample span { padding: 3px 10px; border: 1px solid var(--axis); border-radius: 6px; }
+.figure .toolbar-sample .here { border-color: transparent; background: var(--surface-2); font-weight: 600; }
 
 /* Controls */
 button, input, textarea, select { font: inherit; color: inherit; }

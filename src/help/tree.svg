@@ -1,0 +1,15 @@
+<svg viewBox="0 0 780 172" role="img" aria-label="Example tree of www.example.com">
+<g><path class="tree-link" d="M190,96C305,96,305,36,420,36"/><path class="tree-link" d="M190,96C305,96,305,116,420,116"/><path class="tree-link" d="M190,96C305,96,305,136,420,136"/><path class="tree-link" d="M190,96C305,96,305,156,420,156"/><path class="tree-link" d="M420,36C535,36,535,16,650,16"/><path class="tree-link" d="M420,36C535,36,535,36,650,36"/><path class="tree-link" d="M420,36C535,36,535,56,650,56"/><path class="tree-link" d="M420,116C535,116,535,96,650,96"/><path class="tree-link" d="M420,116C535,116,535,116,650,116"/><path class="tree-link" d="M420,116C535,116,535,136,650,136"/></g>
+<g>
+<g class="tree-node open page" transform="translate(190,96)"><circle r="5"/><text dy="0.32em" x="-10" text-anchor="end">www.example.com<tspan class="n" dx="6">235</tspan></text></g>
+<g class="tree-node open page" transform="translate(420,36)"><circle r="5"/><text dy="0.32em" x="-10" text-anchor="end">blog<tspan class="n" dx="6">120</tspan></text></g>
+<g class="tree-node open page" transform="translate(420,116)"><circle r="5"/><text dy="0.32em" x="-10" text-anchor="end">products<tspan class="n" dx="6">80</tspan></text></g>
+<g class="tree-node closed page" transform="translate(420,136)"><circle r="5"/><text dy="0.32em" x="10" text-anchor="start">help<tspan class="n" dx="6">30</tspan></text></g>
+<g class="tree-node closed page" transform="translate(420,156)"><circle r="5"/><text dy="0.32em" x="10" text-anchor="start">about<tspan class="n" dx="6">4</tspan></text></g>
+<g class="tree-node closed" transform="translate(650,16)"><circle r="5"/><text dy="0.32em" x="10" text-anchor="start">2024<tspan class="n" dx="6">48</tspan></text></g>
+<g class="tree-node closed" transform="translate(650,36)"><circle r="5"/><text dy="0.32em" x="10" text-anchor="start">2025<tspan class="n" dx="6">44</tspan></text></g>
+<g class="tree-node closed" transform="translate(650,56)"><circle r="5"/><text dy="0.32em" x="10" text-anchor="start">2026<tspan class="n" dx="6">27</tspan></text></g>
+<g class="tree-node closed page" transform="translate(650,96)"><circle r="5"/><text dy="0.32em" x="10" text-anchor="start">shoes<tspan class="n" dx="6">41</tspan></text></g>
+<g class="tree-node closed page" transform="translate(650,116)"><circle r="5"/><text dy="0.32em" x="10" text-anchor="start">bags<tspan class="n" dx="6">26</tspan></text></g>
+<g class="tree-node closed page" transform="translate(650,136)"><circle r="5"/><text dy="0.32em" x="10" text-anchor="start">hats<tspan class="n" dx="6">12</tspan></text></g>
+</g></svg>
