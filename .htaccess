@@ -29,6 +29,7 @@ ServerSignature Off
     # Pages without the .php extension.
     RewriteRule ^changelog/?$ changelog.php [L]
     RewriteRule ^bot/?$ bot.php [L]
+    RewriteRule ^help/?$ help.php [L]
 
     # Cache busting: /assets/v-<hash>/js/app.js -> /assets/js/app.js
     # Relative module imports and CSS url() values stay below the same prefix.

@@ -4,3 +4,7 @@
 
 # Local settings (see .env.example)
 /.env
+
+# PHP settings that cPanel generates on the server
+/.user.ini
+/php.ini
