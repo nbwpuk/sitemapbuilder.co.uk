@@ -23,7 +23,7 @@ when the target site blocks direct browser access (CORS).
 | `index.php` | Main page. Reads no user input. |
 | `changelog.php` | Changelog page at `/changelog`. It renders `CHANGELOG.md`. |
 | `bot.php` | Information for site owners at `/bot`. The proxy User-Agent links to it. |
-| `help.php` | Help page for users at `/help`. Its figures are static SVG files in `src/help/`. They use the same CSS classes as the views, thus they follow the light and dark theme. If you change a view, run `node tests/help_figures.mjs` to make the figures again. |
+| `help.php` | Help page for users at `/help`. `assets/js/help.js` makes the tabs; without JavaScript all sections show. Its figures are static SVG files in `src/help/`. They use the same CSS classes as the views, thus they follow the light and dark theme. If you change a view, run `node tests/help_figures.mjs` to make the figures again. |
 | `CHANGELOG.md` | The release notes. Add a new `## version - date` section at the top for each release. The top section gives the version number in the footer. |
 | `.htaccess` | Security headers, deny rules, versioned-asset rewrite, cache rules. |
 | `api/fetch.php` | The proxy endpoint. `mode=robots` gives the `robots.txt` data of an origin as JSON. |

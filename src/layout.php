@@ -67,8 +67,11 @@ function csp(): string
         . "; base-uri 'none'; form-action 'none'; frame-ancestors 'none'";
 }
 
-/** Send headers and print the document head and the site header. `$app` adds the D3 and app scripts. */
-function page_start(string $title, string $description, bool $app): void
+/**
+ * Send headers and print the document head and the site header.
+ * `$app` adds the D3 and app scripts. `$module` adds one other module from assets/js/, for example 'help'.
+ */
+function page_start(string $title, string $description, bool $app, string $module = ''): void
 {
     $a = asset_prefix();
     header('Content-Type: text/html; charset=utf-8');
@@ -91,6 +94,9 @@ function page_start(string $title, string $description, bool $app): void
 <?php if ($app): ?>
 <script src="<?= $a ?>/vendor/d3.v7.min.js" defer></script>
 <script type="module" src="<?= $a ?>/js/app.js"></script>
+<?php endif; ?>
+<?php if ($module !== ''): ?>
+<script type="module" src="<?= $a ?>/js/<?= e($module) ?>.js"></script>
 <?php endif; ?>
 </head>
 <body>
