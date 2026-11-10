@@ -2,6 +2,11 @@
 
 The important changes in each release of Sitemap Builder. The newest release is first.
 
+## Unreleased
+
+### Added
+- The footer has a copyright line: Sitemap Builder is a brand of Encode Group Ltd, with a link to https://www.encodegroup.co.uk.
+
 ## 1.6.0 - 2026-10-16
 
 ### Added
